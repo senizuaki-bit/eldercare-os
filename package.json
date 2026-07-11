@@ -1,0 +1,41 @@
+{
+  "name": "eldercare-os",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.11.0",
+  "engines": {
+    "node": ">=24.16.0 <25"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "eslint playwright.config.ts playwright.production.config.ts e2e scripts && turbo run lint",
+    "typecheck": "tsc --noEmit && turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "playwright test",
+    "test:e2e:offline": "playwright test --config playwright.production.config.ts",
+    "smoke:services": "node scripts/verify-service-health.mjs",
+    "db:generate": "corepack pnpm --filter @eldercare/db db:generate",
+    "db:migrate": "corepack pnpm --filter @eldercare/db db:migrate",
+    "db:seed": "corepack pnpm --filter @eldercare/db db:seed",
+    "db:reset": "corepack pnpm --filter @eldercare/db db:reset",
+    "storage:init": "docker compose --profile setup run --rm minio-init",
+    "compose:validate": "docker compose config --quiet",
+    "security:scan": "node scripts/scan-repository.mjs",
+    "postinstall": "corepack pnpm db:generate"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.61.1",
+    "@types/node": "26.1.1",
+    "eslint": "10.7.0",
+    "globals": "16.4.0",
+    "turbo": "2.10.4",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.63.0",
+    "vitest": "4.1.10"
+  }
+}

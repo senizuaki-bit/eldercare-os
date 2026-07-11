@@ -1,0 +1,121 @@
+import { existsSync } from 'node:fs';
+import { loadEnvFile } from 'node:process';
+
+import { z } from 'zod';
+
+import { ConfigValidationError, type Environment } from './shared.js';
+
+const rootEnvironmentFile = new URL('../../../.env', import.meta.url);
+if (existsSync(rootEnvironmentFile)) {
+  loadEnvFile(rootEnvironmentFile);
+}
+
+function usesProtocol(value: string, protocols: readonly string[]): boolean {
+  try {
+    return protocols.includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+const portSchema = z.coerce.number().int().min(1).max(65_535);
+const httpUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => usesProtocol(value, ['http:', 'https:']), {
+    message: 'must use http or https',
+  });
+const databaseUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => usesProtocol(value, ['postgres:', 'postgresql:']), {
+    message: 'must use postgres or postgresql',
+  });
+const redisUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => usesProtocol(value, ['redis:', 'rediss:']), {
+    message: 'must use redis or rediss',
+  });
+const mqttUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => usesProtocol(value, ['mqtt:', 'mqtts:', 'ws:', 'wss:']), {
+    message: 'must use mqtt, mqtts, ws, or wss',
+  });
+const mqttPrefixSchema = z
+  .string()
+  .min(1)
+  .max(128)
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._/-]*$/);
+const corsOriginsSchema = z
+  .string()
+  .transform((value) =>
+    value
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0),
+  )
+  .pipe(z.array(httpUrlSchema).min(1));
+
+const rawServiceConfigSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  APP_VERSION: z.string().min(1).max(64).default('0.0.1'),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  API_PORT: portSchema.default(4000),
+  WORKER_PORT: portSchema.default(4001),
+  ADMIN_WEB_PORT: portSchema.default(3000),
+  MOBILE_WEB_PORT: portSchema.default(3001),
+  CORS_ORIGINS: corsOriginsSchema,
+  DATABASE_URL: databaseUrlSchema,
+  REDIS_URL: redisUrlSchema,
+  MINIO_ENDPOINT: httpUrlSchema,
+  MINIO_ACCESS_KEY: z.string().min(1),
+  MINIO_SECRET_KEY: z.string().min(1),
+  MINIO_BUCKET: z
+    .string()
+    .min(3)
+    .max(63)
+    .regex(/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/),
+  MQTT_URL: mqttUrlSchema,
+  MQTT_TOPIC_PREFIX: mqttPrefixSchema,
+  READINESS_TIMEOUT_MS: z.coerce.number().int().min(100).max(30_000).default(1500),
+});
+
+export const serviceConfigSchema = rawServiceConfigSchema.transform((value) => ({
+  nodeEnv: value.NODE_ENV,
+  appVersion: value.APP_VERSION,
+  logLevel: value.LOG_LEVEL,
+  apiPort: value.API_PORT,
+  workerPort: value.WORKER_PORT,
+  adminWebPort: value.ADMIN_WEB_PORT,
+  mobileWebPort: value.MOBILE_WEB_PORT,
+  corsOrigins: value.CORS_ORIGINS,
+  databaseUrl: value.DATABASE_URL,
+  redisUrl: value.REDIS_URL,
+  minioEndpoint: value.MINIO_ENDPOINT,
+  minioAccessKey: value.MINIO_ACCESS_KEY,
+  minioSecretKey: value.MINIO_SECRET_KEY,
+  minioBucket: value.MINIO_BUCKET,
+  mqttUrl: value.MQTT_URL,
+  mqttTopicPrefix: value.MQTT_TOPIC_PREFIX,
+  readinessTimeoutMs: value.READINESS_TIMEOUT_MS,
+}));
+
+export type ServiceConfig = z.output<typeof serviceConfigSchema>;
+
+export function parseServiceConfig(environment: Environment = process.env): ServiceConfig {
+  const result = serviceConfigSchema.safeParse(environment);
+
+  if (!result.success) {
+    throw new ConfigValidationError(
+      'service',
+      result.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
+    );
+  }
+
+  return result.data;
+}

@@ -2,7 +2,7 @@
 
 | Milestone | Status | Branch | Acceptance | Notes |
 |---|---|---|---|---|
-| M00 Foundation | NOT_STARTED | feat/m00-foundation | pending | |
+| M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
 | M01 Auth/RBAC | NOT_STARTED | feat/m01-auth-rbac | pending | |
 | M02 Elder management | NOT_STARTED | feat/m02-elder-management | pending | |
 | M03 Needs/work orders | NOT_STARTED | feat/m03-needs-workorders | pending | |
@@ -44,3 +44,24 @@ For each completed milestone record:
 - journey/test mapping
 - known limitations
 - next milestone prerequisites
+
+## M00 completion record
+
+- Commit/PR: branch `feat/m00-foundation`; milestone commit subject `feat(m00): build runnable eldercare foundation`; no PR was opened because the repository has no Git remote.
+- Migrations and rollback: `20260711000000_foundation_system_metadata` creates only `_system_metadata`; `rollback.sql` is included. Migrate, repeat migrate, repeat seed, reset, and seed-after-reset all passed against local PostgreSQL.
+- APIs/events/state machines: API `/health/live`, `/health/ready`, `/docs`, and `/openapi.json`; worker live/readiness server; versioned MQTT base contracts. No business API, event consumer, or care state machine was implemented early.
+- Permissions/consents/approvals: authorization, AI, agents, content, events, and commerce packages contain contracts/placeholders only. No M00 business data can be authorized or executed; UI role switching is explicitly local and not authentication.
+- Commands and exact result:
+  - `pnpm install --frozen-lockfile` — passed for all 17 workspace projects.
+  - `pnpm lint` — 20/20 Turbo tasks passed plus root E2E/scripts lint.
+  - `pnpm typecheck` — root TypeScript check plus 20/20 Turbo tasks passed.
+  - `pnpm test` — 20/20 Turbo tasks passed; admin 7/7, mobile 11/11, and all API/worker/package unit suites passed.
+  - `pnpm build` — 16/16 workspace builds passed; both Next.js production builds rendered their route manifests.
+  - `pnpm test:integration` — 20/20 tasks passed against real PostgreSQL, Redis, and Mosquitto; OpenAPI concrete schemas passed.
+  - `pnpm test:e2e` — 8/8 admin/mobile dual-viewport tests passed, including serious/critical Axe checks.
+  - `pnpm test:e2e:offline` — 1/1 production service-worker test passed for cached-shell and uncached-route fallback behavior.
+  - `pnpm compose:validate`, `pnpm security:scan`, MQTT check, and `pnpm smoke:services` — passed; PostgreSQL, Redis, MinIO, and Mosquitto reported healthy.
+- Screenshots/routes: admin `/`; mobile `/m/elder/home`, `/m/caregiver/home`, `/m/family/home`, `/offline`; QA evidence under `docs/design/qa/`; final report `design-qa.md`; generated PWA icon under `apps/mobile-web/public/icons/`.
+- Journey/test mapping: M00 validates only runnable shells, infrastructure, health boundaries, state primitives, responsive/accessibility behavior, local role previews, and offline degradation. End-to-end journeys A–J remain intentionally unimplemented.
+- Known limitations: all visible records are fictional fixtures; there is no real auth, tenant data, care workflow, AI provider call, payment, device publishing, or production deployment. Local Compose credentials and anonymous MQTT are loopback-only development settings.
+- Next milestone prerequisites: create `feat/m01-auth-rbac` from the accepted M00 branch, then implement tenant-aware identity, sessions, permissions, scope enforcement, audit foundations, and negative authorization coverage without starting M02 work.

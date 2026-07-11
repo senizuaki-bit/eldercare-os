@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'feat/**']
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.16.0
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.11.0 --activate
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Validate Compose
+        run: pnpm compose:validate
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Repository safety scan
+        run: pnpm security:scan
+
+  foundation-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.16.0
+      - name: Enable pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.11.0 --activate
+      - run: cp .env.example .env
+      - run: pnpm install --frozen-lockfile
+      - name: Start local infrastructure
+        run: |
+          docker compose up -d --wait
+          pnpm storage:init
+      - name: Database lifecycle
+        run: |
+          pnpm db:migrate
+          pnpm db:migrate
+          pnpm db:seed
+          pnpm db:seed
+          pnpm db:reset
+          pnpm db:seed
+      - name: Integration tests
+        run: pnpm test:integration
+      - name: MQTT connection smoke
+        run: pnpm --filter @eldercare/iot-simulator check
+      - name: Build service processes
+        run: pnpm build
+      - name: API and worker health smoke
+        run: pnpm smoke:services
+      - name: Browser smoke tests
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e
+          pnpm test:e2e:offline
+      - name: Capture infrastructure logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose down
