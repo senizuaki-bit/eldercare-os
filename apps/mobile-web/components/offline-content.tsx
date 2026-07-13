@@ -9,12 +9,12 @@ export function OfflineContent() {
         <DisconnectOutlined className="standalone-state-icon" aria-hidden="true" />
         <p className="eyebrow">离线保护</p>
         <h1 id="offline-title">暂时无法连接</h1>
-        <p>请检查网络后重试。尚未连接后端，页面不会把本地演示操作标记为真实成功。</p>
-        <a className="primary-link-button" href="/m/elder/home">
+        <p>请检查网络后重试。为保护隐私，离线时不会展示老人、护工或家属门户内容。</p>
+        <a className="primary-link-button" href="/">
           <ReloadOutlined aria-hidden="true" />
-          返回演示首页
+          重新连接
         </a>
-        <p className="fixture-disclaimer">本页面仅用于 M00 PWA 离线降级演示。</p>
+        <p className="fixture-disclaimer">恢复网络后，系统会重新验证账号与数据范围。</p>
       </section>
     </main>
   );

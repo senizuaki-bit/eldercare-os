@@ -44,6 +44,9 @@ importers:
       '@ant-design/icons':
         specifier: 6.3.2
         version: 6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@eldercare/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@eldercare/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -90,12 +93,18 @@ importers:
 
   apps/api:
     dependencies:
+      '@eldercare/authz':
+        specifier: workspace:*
+        version: link:../../packages/authz
       '@eldercare/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@eldercare/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@eldercare/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@eldercare/observability':
         specifier: workspace:*
         version: link:../../packages/observability
@@ -182,6 +191,9 @@ importers:
       '@ant-design/icons':
         specifier: 6.3.2
         version: 6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@eldercare/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@eldercare/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -282,6 +294,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@eldercare/authz':
+        specifier: workspace:*
+        version: link:../authz
       '@prisma/adapter-pg':
         specifier: 7.8.0
         version: 7.8.0

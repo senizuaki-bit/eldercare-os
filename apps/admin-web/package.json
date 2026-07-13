@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "6.3.2",
+    "@eldercare/contracts": "workspace:*",
     "@eldercare/ui": "workspace:*",
     "antd": "6.5.0",
     "echarts": "6.1.0",

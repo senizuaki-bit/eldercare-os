@@ -10,6 +10,16 @@ export const roleLabels: Record<Role, string> = {
   family: '家属端'
 };
 
+export const sectionsByRole: Record<Role, readonly string[]> = {
+  caregiver: ['home', 'tasks', 'handover', 'profile'],
+  elder: ['home', 'schedule', 'family', 'profile'],
+  family: ['home', 'events', 'services', 'profile']
+};
+
 export function isRole(value: string): value is Role {
   return roles.some((role) => role === value);
+}
+
+export function isRoleSection(role: Role, value: string): boolean {
+  return sectionsByRole[role].includes(value);
 }

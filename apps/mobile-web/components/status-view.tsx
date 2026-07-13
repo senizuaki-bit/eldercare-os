@@ -29,7 +29,7 @@ const statusContent: Record<VisibleDemoMode, { description: string; eyebrow: str
     title: '这次没有加载成功'
   },
   forbidden: {
-    description: '当前演示角色没有访问权限。页面不会绕过授权，也不会显示受限信息。',
+    description: '当前账号没有访问权限。页面不会绕过授权，也不会显示受限信息。',
     eyebrow: '权限状态演示',
     title: '您无权查看此内容'
   },

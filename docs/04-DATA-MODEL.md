@@ -10,10 +10,13 @@
 - Room
 - Bed
 - User
+- PasswordCredential
 - Role
 - Permission
+- RolePermission
 - UserRole
 - DataScope
+- AuthSession
 - StaffProfile
 - Team
 - Shift

@@ -63,7 +63,10 @@ function SectionHeading({
   );
 }
 
-export function ElderHome({ onNavigate }: Readonly<{ onNavigate: (tab: string) => void }>) {
+export function ElderHome({
+  displayName,
+  onNavigate
+}: Readonly<{ displayName: string; onNavigate: (tab: string) => void }>) {
   const [voiceStage, setVoiceStage] = useState<VoiceStage>('idle');
   const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -104,7 +107,7 @@ export function ElderHome({ onNavigate }: Readonly<{ onNavigate: (tab: string) =
         <p className="eyebrow">老人端首页</p>
         <div className="intro-title-row">
           <div>
-            <h1 id="elder-home-title">早上好，演示用户</h1>
+            <h1 id="elder-home-title">早上好，{displayName}</h1>
             <p>今天 3 项固定演示安排</p>
           </div>
           <FixtureBadge />
@@ -562,9 +565,9 @@ interface SecondaryShellProps {
 }
 
 const secondaryDescriptions: Record<Role, string> = {
-  caregiver: '此区域预留给任务、交班和个人设置；M00 不执行真实工单转换。',
-  elder: '此区域预留给安排、家属和个人设置；M00 不执行真实照护业务。',
-  family: '此区域预留给动态、服务和个人设置；M00 不读取真实老人数据。'
+  caregiver: '此区域预留给任务、交班和个人设置；当前不会执行真实工单转换。',
+  elder: '此区域预留给安排、家属和个人设置；当前不会执行真实照护业务。',
+  family: '此区域预留给动态、服务和个人设置；当前不会读取真实老人数据。'
 };
 
 export function SecondaryShell({ label, onReturnHome, role }: SecondaryShellProps) {

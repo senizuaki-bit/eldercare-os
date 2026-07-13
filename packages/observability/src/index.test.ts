@@ -38,6 +38,33 @@ describe('redactSensitive', () => {
 
     expect(redactSensitive(input)).toEqual({ event: 'ready', self: '[CIRCULAR]' });
   });
+
+  it('redacts authentication and request-fingerprint fields while retaining safe IDs', () => {
+    const serialized = JSON.stringify(
+      redactSensitive({
+        actorId: 'user-safe-id',
+        organizationId: 'org-safe-id',
+        loginName: 'platform.admin',
+        sessionId: 'session-secret',
+        csrfToken: 'csrf-secret',
+        setCookie: 'eldercare.sid=raw-cookie',
+        userAgent: 'browser-fingerprint',
+        ipAddress: '203.0.113.42',
+        forwardedFor: '198.51.100.8',
+        providerCredential: 'provider-secret',
+      }),
+    );
+
+    expect(serialized).toContain('user-safe-id');
+    expect(serialized).toContain('org-safe-id');
+    expect(serialized).not.toContain('platform.admin');
+    expect(serialized).not.toContain('session-secret');
+    expect(serialized).not.toContain('csrf-secret');
+    expect(serialized).not.toContain('browser-fingerprint');
+    expect(serialized).not.toContain('203.0.113.42');
+    expect(serialized).not.toContain('198.51.100.8');
+    expect(serialized).not.toContain('provider-secret');
+  });
 });
 
 describe('createLogger', () => {

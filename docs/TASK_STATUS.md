@@ -3,7 +3,7 @@
 | Milestone | Status | Branch | Acceptance | Notes |
 |---|---|---|---|---|
 | M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
-| M01 Auth/RBAC | NOT_STARTED | feat/m01-auth-rbac | pending | |
+| M01 Auth/RBAC | COMPLETE | feat/m01-auth-rbac | passed | 2026-07-13; local milestone accepted, GitHub publish pending remote/CLI setup |
 | M02 Elder management | NOT_STARTED | feat/m02-elder-management | pending | |
 | M03 Needs/work orders | NOT_STARTED | feat/m03-needs-workorders | pending | |
 | M04 Emergency | NOT_STARTED | feat/m04-emergency | pending | |
@@ -65,3 +65,27 @@ For each completed milestone record:
 - Journey/test mapping: M00 validates only runnable shells, infrastructure, health boundaries, state primitives, responsive/accessibility behavior, local role previews, and offline degradation. End-to-end journeys A–J remain intentionally unimplemented.
 - Known limitations: all visible records are fictional fixtures; there is no real auth, tenant data, care workflow, AI provider call, payment, device publishing, or production deployment. Local Compose credentials and anonymous MQTT are loopback-only development settings.
 - Next milestone prerequisites: create `feat/m01-auth-rbac` from the accepted M00 branch, then implement tenant-aware identity, sessions, permissions, scope enforcement, audit foundations, and negative authorization coverage without starting M02 work.
+
+## M01 completion record
+
+- Commit/PR: branch `feat/m01-auth-rbac`; milestone commit subject `feat(m01): add tenant-aware auth and RBAC`; GitHub push and draft PR remain pending because this checkout has no remote and GitHub CLI is not installed.
+- Migrations and rollback: `20260712000000_auth_rbac` adds `Organization`, `Facility`, `User`, `PasswordCredential`, `Role`, `Permission`, `RolePermission`, `UserRole`, `DataScope`, `AuthSession`, and `AuditEvent`; `rollback.sql` is included. Migrate and seed each passed twice, and a clean reset replayed both M00/M01 migrations before a successful seed.
+- APIs/events/state machines: `POST /auth/login`, `GET /auth/session`, `POST /auth/context`, `POST /auth/logout`; tenant/facility-scoped user list/detail/access replacement, role list/detail, and audit-event endpoints. M01 adds no care-domain state machine or asynchronous business event early.
+- Permissions/consents/approvals: server-side permission checks for session, organization/facility, identity and audit reads plus access replacement; explicit platform/organization/facility/floor/care-team/assigned-elder/active-shift/linked-elder/own-record scope policies and resource-policy extension points. `ACTIVE_SHIFT` is time bounded. A facility manager cannot replace organization/platform access, and no UI hiding substitutes for API authorization.
+- Audit and session safety: opaque cookie sessions, CSRF double-submit protection, strict CORS, Redis login throttling, idle/absolute TTL, version-based revocation after access changes, atomic context switching plus audit, append-only audit metadata, generic non-enumerating denials, and response/log redaction.
+- Commands and exact result:
+  - `pnpm install --frozen-lockfile` — passed for all 17 workspace projects with the pinned lockfile.
+  - `pnpm lint` — root E2E/scripts lint plus 22/22 Turbo tasks passed.
+  - `pnpm typecheck` — root TypeScript check plus 22/22 Turbo tasks passed.
+  - `pnpm test` — 22/22 Turbo tasks passed; admin 28/28, mobile 36/36, API 14/14, authz 12/12, contracts 10/10 and DB 11/11 passed.
+  - `pnpm test:integration` — 20/20 Turbo tasks passed; API 12/12 includes real PostgreSQL/Redis auth and authorization coverage.
+  - `pnpm build` — 16/16 workspace builds passed; both Next.js apps produced production route manifests.
+  - `pnpm test:e2e` — 8/8 tests passed at admin 1440/1280 and mobile 375/360 viewports, including real login/logout, scoped search, role mismatch denial, family privacy and serious/critical Axe checks.
+  - `pnpm test:e2e:offline` — 1/1 production PWA test passed; protected portal content was not restored from cache while offline.
+  - `pnpm db:migrate`, repeated migrate, repeated seed, `pnpm db:reset`, and seed after reset — passed against local PostgreSQL.
+  - `pnpm compose:validate`, `pnpm security:scan`, `pnpm smoke:services`, and the MQTT readiness check — passed.
+  - `pnpm dev` — admin, mobile, API and worker all became reachable in one root dev run while retaining file watching.
+- Screenshots/routes: admin `/login`, `/`, `/users`, `/roles`, `/forbidden`; mobile `/login`, `/m/elder/home`, `/m/caregiver/home`, `/m/family/home`, `/offline`; Swagger `/docs`. In-app browser QA verified the 1440×900 admin login/dashboard/access flow and the 375×812 elder login/home flow, including 118 px voice and 103 px emergency targets, confirmation gates, no horizontal overflow and no console errors.
+- Journey/test mapping: authentication and routing tests cover valid/invalid login, CSRF, logout, context switching, session invalidation, cross-organization/cross-facility indistinguishable denial, insufficient permission, facility-manager anti-escalation, audit redaction, protected mobile portals and offline cache denial. This is the access-control foundation for journeys A–J; no M02 elder or later business workflow is claimed complete.
+- Known limitations: local-demo password authentication only; no external IdP, MFA, password recovery or production credential lifecycle. Admin role/access pages are read-first except the protected API replacement endpoint used by integration coverage. Mobile home content remains fictional shell data. Elder, family relationship, staff/team/shift business records and consent-aware domain views begin in M02.
+- Next milestone prerequisites: publish the M01 branch and draft PR when a GitHub remote/CLI are available, then create `feat/m02-elder-management` from accepted M01 and implement facility/room/bed, elder/family, staff/team/shift, consent-aware views and their negative authorization tests without starting M03.

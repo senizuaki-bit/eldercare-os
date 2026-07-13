@@ -6,11 +6,11 @@ import '@eldercare/ui/styles.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  applicationName: '安心照护演示',
-  description: '老人、护工与家属移动端的本地虚构演示壳',
+  applicationName: '安心照护',
+  description: '老人、护工与家属的安全移动门户',
   title: {
-    default: '安心照护演示',
-    template: '%s · 安心照护演示'
+    default: '安心照护',
+    template: '%s · 安心照护'
   }
 };
 

@@ -27,6 +27,17 @@
 
 ## 3. 权限示例
 
+### 身份、会话与机构
+
+- session.self.read
+- session.self.manage
+- organization.read
+- facility.read
+- identity.user.read
+- identity.role.read
+- identity.access.manage
+- audit.read
+
 ### 老人和照护
 
 - elder.read.basic
@@ -81,10 +92,10 @@
 - report.read
 - report.export
 - performance.read
-- audit.read
 
 ## 4. 数据范围
 
+- platform
 - organization
 - facility
 - building/floor/zone
@@ -95,6 +106,8 @@
 - assigned activity
 - assigned order/provider
 - own records
+
+M01 已落地的数据范围种类为 `PLATFORM`、`ORGANIZATION`、`FACILITY`、`FLOOR`、`CARE_TEAM`、`ASSIGNED_ELDER`、`ACTIVE_SHIFT`、`LINKED_ELDER` 和 `OWN_RECORD`。`ACTIVE_SHIFT` 必须有有效起止时间，过期后不能继续授权；活动、订单和服务商范围在对应后续里程碑实现。
 
 ## 5. 同意用途
 

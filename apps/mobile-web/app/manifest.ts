@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     background_color: '#f3f7f6',
-    description: '老人、护工与家属移动端的本地虚构演示壳',
+    description: '老人、护工与家属的安全移动门户',
     display: 'standalone',
     icons: [
       {
@@ -20,11 +20,11 @@ export default function manifest(): MetadataRoute.Manifest {
       }
     ],
     lang: 'zh-CN',
-    name: '安心照护演示',
+    name: '安心照护',
     orientation: 'portrait',
     scope: '/',
-    short_name: '照护演示',
-    start_url: '/m/elder/home',
+    short_name: '安心照护',
+    start_url: '/',
     theme_color: '#0d665c'
   };
 }

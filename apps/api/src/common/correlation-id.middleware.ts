@@ -10,5 +10,10 @@ export function correlationIdMiddleware(request: Request, response: Response, ne
 
   response.setHeader(CORRELATION_HEADER, correlationId);
   response.locals.correlationId = correlationId;
+  (request as Request & { correlationId?: string }).correlationId = correlationId;
   next();
+}
+
+export function getCorrelationId(response: Response): string {
+  return String(response.locals.correlationId ?? 'unknown-correlation');
 }

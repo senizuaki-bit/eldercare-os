@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 
 const forbiddenPatterns = [
@@ -26,7 +26,11 @@ const patterns = forbiddenPatterns.map((pattern) => new RegExp(pattern, 'i'));
 const findings = [];
 
 for (const file of result.stdout.split('\0').filter(Boolean)) {
-  if (binaryExtensions.has(extname(file).toLowerCase()) || file === 'scripts/scan-repository.mjs') continue;
+  if (
+    !existsSync(file) ||
+    binaryExtensions.has(extname(file).toLowerCase()) ||
+    file === 'scripts/scan-repository.mjs'
+  ) continue;
   const content = readFileSync(file, 'utf8');
   const lines = content.split(/\r?\n/);
   lines.forEach((line, index) => {

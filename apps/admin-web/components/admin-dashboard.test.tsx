@@ -1,11 +1,19 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { AppProviders } from '../app/providers';
+import { authSessionFixture } from '../test/fixtures';
+import { AdminShell } from './admin-shell';
 import { AdminDashboard } from './admin-dashboard';
+
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/'
+}));
 
 function renderDashboard() {
   return render(
     <AppProviders>
-      <AdminDashboard />
+      <AdminShell session={authSessionFixture}>
+        <AdminDashboard />
+      </AdminShell>
     </AppProviders>
   );
 }
@@ -21,7 +29,7 @@ describe('AdminDashboard', () => {
     expect(screen.getByText('未确认紧急事件')).toBeInTheDocument();
     expect(screen.getByText('待人工复核')).toBeInTheDocument();
     expect(screen.getByText('1–4 / 4 项演示队列')).toBeInTheDocument();
-    expect(screen.getByText(/当前页面只展示可交互的管理端基础壳/)).toBeInTheDocument();
+    expect(screen.getByText(/身份、会话和访问范围已由后端校验/)).toBeInTheDocument();
   });
 
   it('supports an accessible collapsible navigation rail', () => {
@@ -40,7 +48,7 @@ describe('AdminDashboard', () => {
   it('filters queue fixtures through global search', () => {
     renderDashboard();
 
-    fireEvent.change(screen.getByRole('searchbox', { name: '全局搜索演示队列' }), {
+    fireEvent.change(screen.getByRole('searchbox', { name: '搜索当前页面' }), {
       target: { value: 'A-12' }
     });
 

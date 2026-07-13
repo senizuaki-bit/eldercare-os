@@ -1,19 +1,27 @@
 import { MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
-import { parseServiceConfig } from '@eldercare/config';
+import { APP_GUARD } from '@nestjs/core';
+import { AuditModule } from './audit/audit.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { CsrfGuard } from './auth/csrf.guard.js';
+import { SessionGuard } from './auth/session.guard.js';
+import { PermissionGuard } from './authorization/permission.guard.js';
 import { correlationIdMiddleware } from './common/correlation-id.middleware.js';
+import { AppConfigModule } from './config/app-config.module.js';
+import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
 import { ReadinessService } from './health/readiness.service.js';
-import { SERVICE_CONFIG } from './tokens.js';
+import { IdentityModule } from './identity/identity.module.js';
 
 @Module({
+  imports: [AppConfigModule, DatabaseModule, AuditModule, AuthModule, IdentityModule],
   controllers: [HealthController],
   providers: [
     ReadinessService,
-    {
-      provide: SERVICE_CONFIG,
-      useFactory: () => parseServiceConfig()
-    }
-  ]
+    PermissionGuard,
+    { provide: APP_GUARD, useExisting: SessionGuard },
+    { provide: APP_GUARD, useExisting: CsrfGuard },
+    { provide: APP_GUARD, useExisting: PermissionGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

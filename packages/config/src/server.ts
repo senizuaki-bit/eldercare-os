@@ -25,6 +25,20 @@ const httpUrlSchema = z
   .refine((value) => usesProtocol(value, ['http:', 'https:']), {
     message: 'must use http or https',
   });
+const corsOriginSchema = httpUrlSchema
+  .superRefine((value, context) => {
+    const parsed = new URL(value);
+    if (
+      parsed.username.length > 0 ||
+      parsed.password.length > 0 ||
+      parsed.pathname !== '/' ||
+      parsed.search.length > 0 ||
+      parsed.hash.length > 0
+    ) {
+      context.addIssue({ code: 'custom', message: 'must be an origin without credentials or path' });
+    }
+  })
+  .transform((value) => new URL(value).origin);
 const databaseUrlSchema = z
   .string()
   .url()
@@ -56,7 +70,8 @@ const corsOriginsSchema = z
       .map((origin) => origin.trim())
       .filter((origin) => origin.length > 0),
   )
-  .pipe(z.array(httpUrlSchema).min(1));
+  .pipe(z.array(corsOriginSchema).min(1))
+  .transform((origins) => [...new Set(origins)]);
 
 const rawServiceConfigSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -80,6 +95,39 @@ const rawServiceConfigSchema = z.object({
   MQTT_URL: mqttUrlSchema,
   MQTT_TOPIC_PREFIX: mqttPrefixSchema,
   READINESS_TIMEOUT_MS: z.coerce.number().int().min(100).max(30_000).default(1500),
+  AUTH_SESSION_IDLE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(300)
+    .max(86_400)
+    .default(1800),
+  AUTH_SESSION_ABSOLUTE_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(900)
+    .max(604_800)
+    .default(28_800),
+  AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
+  AUTH_RATE_LIMIT_WINDOW_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(60)
+    .max(86_400)
+    .default(900),
+  AUTH_RATE_LIMIT_KEY_PREFIX: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9:_-]*$/)
+    .default('eldercare:auth'),
+}).superRefine((value, context) => {
+  if (value.AUTH_SESSION_ABSOLUTE_TTL_SECONDS <= value.AUTH_SESSION_IDLE_TTL_SECONDS) {
+    context.addIssue({
+      code: 'custom',
+      path: ['AUTH_SESSION_ABSOLUTE_TTL_SECONDS'],
+      message: 'must be greater than AUTH_SESSION_IDLE_TTL_SECONDS',
+    });
+  }
 });
 
 export const serviceConfigSchema = rawServiceConfigSchema.transform((value) => ({
@@ -100,6 +148,11 @@ export const serviceConfigSchema = rawServiceConfigSchema.transform((value) => (
   mqttUrl: value.MQTT_URL,
   mqttTopicPrefix: value.MQTT_TOPIC_PREFIX,
   readinessTimeoutMs: value.READINESS_TIMEOUT_MS,
+  authSessionIdleTtlSeconds: value.AUTH_SESSION_IDLE_TTL_SECONDS,
+  authSessionAbsoluteTtlSeconds: value.AUTH_SESSION_ABSOLUTE_TTL_SECONDS,
+  authRateLimitMaxAttempts: value.AUTH_RATE_LIMIT_MAX_ATTEMPTS,
+  authRateLimitWindowSeconds: value.AUTH_RATE_LIMIT_WINDOW_SECONDS,
+  authRateLimitKeyPrefix: value.AUTH_RATE_LIMIT_KEY_PREFIX,
 }));
 
 export type ServiceConfig = z.output<typeof serviceConfigSchema>;

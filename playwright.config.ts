@@ -2,7 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   fullyParallel: true,
+  workers: process.env.CI ? 2 : 4,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
@@ -12,6 +15,16 @@ export default defineConfig({
   },
   webServer: [
     {
+      command: 'corepack pnpm --filter @eldercare/api exec tsx src/main.ts',
+      url: 'http://127.0.0.1:4000/health/live',
+      reuseExistingServer: false,
+      env: {
+        AUTH_RATE_LIMIT_KEY_PREFIX: `eldercare:e2e:${Date.now()}`,
+        CORS_ORIGINS: 'http://127.0.0.1:3300,http://127.0.0.1:3001'
+      },
+      timeout: 120_000
+    },
+    {
       command: 'corepack pnpm --filter @eldercare/admin-web exec next dev --hostname 127.0.0.1 --port 3300',
       url: 'http://127.0.0.1:3300',
       reuseExistingServer: false,
@@ -20,7 +33,7 @@ export default defineConfig({
     {
       command: 'corepack pnpm --filter @eldercare/mobile-web dev',
       url: 'http://127.0.0.1:3001',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 120_000
     }
   ],

@@ -9,6 +9,11 @@ describe('createPrismaClient', () => {
     );
 
     expect(prisma).toBeDefined();
+    expect(prisma.user).toBeDefined();
+    expect(prisma.userRole).toBeDefined();
+    expect(prisma.dataScope).toBeDefined();
+    expect(prisma.authSession).toBeDefined();
+    expect(prisma.auditEvent).toBeDefined();
     await prisma.$disconnect();
   });
 

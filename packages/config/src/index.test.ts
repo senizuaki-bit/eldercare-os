@@ -36,7 +36,52 @@ describe('typed configuration', () => {
       workerPort: 4101,
       corsOrigins: ['http://localhost:3100', 'http://localhost:3101'],
       readinessTimeoutMs: 2000,
+      authSessionIdleTtlSeconds: 1800,
+      authSessionAbsoluteTtlSeconds: 28_800,
+      authRateLimitMaxAttempts: 5,
+      authRateLimitWindowSeconds: 900,
+      authRateLimitKeyPrefix: 'eldercare:auth',
     });
+  });
+
+  it('validates session lifetime ordering and auth rate-limit settings', () => {
+    expect(() =>
+      parseServiceConfig({
+        ...validEnvironment,
+        AUTH_SESSION_IDLE_TTL_SECONDS: '3600',
+        AUTH_SESSION_ABSOLUTE_TTL_SECONDS: '1800',
+      }),
+    ).toThrow('AUTH_SESSION_ABSOLUTE_TTL_SECONDS');
+
+    expect(
+      parseServiceConfig({
+        ...validEnvironment,
+        AUTH_RATE_LIMIT_MAX_ATTEMPTS: '7',
+        AUTH_RATE_LIMIT_KEY_PREFIX: 'eldercare:test-auth',
+      }),
+    ).toMatchObject({
+      authRateLimitMaxAttempts: 7,
+      authRateLimitKeyPrefix: 'eldercare:test-auth',
+    });
+  });
+
+  it('normalizes and strictly validates CORS origins', () => {
+    expect(
+      parseServiceConfig({
+        ...validEnvironment,
+        CORS_ORIGINS: 'http://localhost:3100/, http://localhost:3100',
+      }).corsOrigins,
+    ).toEqual(['http://localhost:3100']);
+
+    for (const corsOrigins of [
+      'http://localhost:3100/admin',
+      'http://user:password@localhost:3100',
+      'http://localhost:3100?tenant=demo',
+    ]) {
+      expect(() => parseServiceConfig({ ...validEnvironment, CORS_ORIGINS: corsOrigins })).toThrow(
+        'CORS_ORIGINS',
+      );
+    }
   });
 
   it('fails fast without echoing secret values', () => {

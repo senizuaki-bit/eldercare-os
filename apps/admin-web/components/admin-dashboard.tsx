@@ -1,46 +1,31 @@
 'use client';
 
 import {
-  AlertOutlined,
-  ApartmentOutlined,
-  BarChartOutlined,
-  BellOutlined,
-  CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloudServerOutlined,
   DatabaseOutlined,
   DisconnectOutlined,
-  DownOutlined,
   EnvironmentOutlined,
-  FileDoneOutlined,
   FileSearchOutlined,
   HomeOutlined,
   InfoCircleOutlined,
-  LaptopOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  MedicineBoxOutlined,
   NotificationOutlined,
-  ProfileOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
-  SearchOutlined,
   SettingOutlined,
-  UserOutlined,
   WarningFilled,
   WifiOutlined
 } from '@ant-design/icons';
 import {
   App as AntApp,
-  Badge,
   Breadcrumb,
   Button,
   Card,
   Checkbox,
-  Dropdown,
   Empty,
-  Input,
   Popover,
   Progress,
   Result,
@@ -50,9 +35,10 @@ import {
   Tag,
   Tooltip
 } from 'antd';
-import type { MenuProps, TableColumnsType } from 'antd';
+import type { TableColumnsType } from 'antd';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAdminShellSearch } from './admin-shell';
 import { ResponseTrendChart } from './response-trend-chart';
 
 type QueueKey = 'all' | 'emergency' | 'review' | 'overdue' | 'offline';
@@ -76,28 +62,6 @@ interface QueueFixture {
   age: string;
   icon: ReactNode;
 }
-
-interface NavigationFixture {
-  key: string;
-  label: string;
-  icon: ReactNode;
-  active?: boolean;
-  enabled?: boolean;
-  milestone?: string;
-  badge?: number;
-}
-
-const navigationItems: NavigationFixture[] = [
-  { key: 'home', label: '工作台', icon: <HomeOutlined />, enabled: true },
-  { key: 'risk', label: '风险待办', icon: <AlertOutlined />, active: true, enabled: true, badge: 4 },
-  { key: 'orders', label: '工单管理', icon: <ProfileOutlined />, milestone: 'M03' },
-  { key: 'residents', label: '入住管理', icon: <ApartmentOutlined />, milestone: 'M02' },
-  { key: 'care', label: '照护计划', icon: <MedicineBoxOutlined />, milestone: 'M02' },
-  { key: 'devices', label: '设备管理', icon: <LaptopOutlined />, milestone: 'M05' },
-  { key: 'reports', label: '报表中心', icon: <BarChartOutlined />, milestone: 'M09' },
-  { key: 'agents', label: '智能体审批', icon: <FileDoneOutlined />, milestone: 'M15' },
-  { key: 'settings', label: '系统设置', icon: <SettingOutlined />, milestone: 'M01' }
-];
 
 const queueFixtures: QueueFixture[] = [
   {
@@ -263,11 +227,9 @@ function StateSurface({ state, onReset }: Readonly<{ state: DemoState; onReset: 
 
 export function AdminDashboard() {
   const { message } = AntApp.useApp();
+  const { searchTerm, setSearchTerm } = useAdminShellSearch();
   const queueSectionRef = useRef<HTMLElement>(null);
-  const [collapsed, setCollapsed] = useState(false);
-  const [facility, setFacility] = useState('qinglan');
   const [queueFilter, setQueueFilter] = useState<QueueKey>('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [demoState, setDemoState] = useState<DemoState>('ready');
   const [queueVisible, setQueueVisible] = useState(true);
   const [page, setPage] = useState(1);
@@ -388,150 +350,13 @@ export function AdminDashboard() {
     return key === 'action' || (typeof key === 'string' && visibleColumnSet.has(key as QueueColumnKey));
   });
 
-  const notificationMenu: MenuProps = {
-    items: [
-      { key: 'one', label: '8 项紧急事件待确认' },
-      { key: 'two', label: '6 台关键设备处于离线状态' }
-    ],
-    onClick: ({ key }) => {
-      const nextFilter: QueueKey = key === 'one' ? 'emergency' : 'offline';
-      setQueueFilter(nextFilter);
-      setPage(1);
-      void message.info(`已定位到“${queueLabels[nextFilter]}”`);
-    }
-  };
-
-  const profileMenu: MenuProps = {
-    items: [
-      { key: 'role', label: '当前角色：护理主管', disabled: true },
-      { type: 'divider' },
-      { key: 'permissions', label: '查看演示权限说明' }
-    ],
-    onClick: ({ key }) => {
-      if (key === 'permissions') {
-        setDemoState('forbidden');
-        void message.info('已打开 M00 权限状态演示');
-      }
-    }
-  };
-
   const resetDemoState = () => setDemoState('ready');
   const isBlockingState = ['empty', 'error', 'offline', 'forbidden'].includes(demoState);
   const maxPage = Math.max(1, Math.ceil(visibleQueues.length / pageSize));
   const safePage = Math.min(page, maxPage);
 
   return (
-    <div className={`admin-shell ${collapsed ? 'admin-shell-collapsed' : ''}`}>
-      <aside className="sidebar" aria-label="主导航">
-        <div className="sidebar-brand">
-          <SafetyCertificateOutlined aria-hidden="true" />
-          {!collapsed && <span>照护<br />运营台</span>}
-        </div>
-
-        <nav className="sidebar-nav">
-          {navigationItems.map((item) => (
-            <Tooltip
-              key={item.key}
-              placement="right"
-              title={collapsed ? `${item.label}${item.milestone ? ` · ${item.milestone}` : ''}` : undefined}
-            >
-              <button
-                type="button"
-                className={`nav-item ${item.active ? 'nav-item-active' : ''}`}
-                aria-current={item.active ? 'page' : undefined}
-                aria-label={collapsed ? item.label : undefined}
-                disabled={!item.enabled && !item.active}
-                onClick={() => {
-                  if (item.key === 'home') {
-                    setQueueFilter('all');
-                    setSearchTerm('');
-                    setPage(1);
-                    resetDemoState();
-                    void message.success('已返回风险优先工作台');
-                  }
-                }}
-              >
-                <Badge count={item.badge} size="small" offset={[5, 0]}>
-                  <span className="nav-icon" aria-hidden="true">{item.icon}</span>
-                </Badge>
-                {!collapsed && <span className="nav-label">{item.label}</span>}
-                {!collapsed && item.milestone && <span className="nav-milestone">{item.milestone}</span>}
-              </button>
-            </Tooltip>
-          ))}
-        </nav>
-
-        <button
-          type="button"
-          className="sidebar-collapse"
-          aria-label={collapsed ? '展开侧栏' : '折叠侧栏'}
-          aria-expanded={!collapsed}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          {!collapsed && <span>折叠导航</span>}
-        </button>
-      </aside>
-
-      <header className="topbar">
-        <div className="topbar-title">
-          <strong>照护运营台</strong>
-          <Select
-            aria-label="切换演示院区"
-            className="facility-select"
-            value={facility}
-            options={[
-              { value: 'qinglan', label: '青岚院区 · 演示' },
-              { value: 'haitang', label: '海棠院区 · 演示' }
-            ]}
-            onChange={(value: string) => {
-              setFacility(value);
-              void message.info('已切换演示院区；风险数字仍为固定 fixture');
-            }}
-          />
-        </div>
-
-        <Input.Search
-          className="global-search"
-          aria-label="全局搜索演示队列"
-          placeholder="搜索队列、房间或设备"
-          allowClear
-          prefix={<SearchOutlined aria-hidden="true" />}
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          onSearch={(value) => {
-            setSearchTerm(value);
-            void message.info(value ? `正在筛选演示数据：“${value}”` : '已清除搜索条件');
-          }}
-        />
-
-        <div className="topbar-actions">
-          <Badge status="default" text="本地演示数据" className="fixture-badge" />
-          <span className="topbar-divider" aria-hidden="true" />
-          <span className="date-display"><CalendarOutlined aria-hidden="true" />7月11日 周六&nbsp; 11:24</span>
-          <span className="topbar-divider" aria-hidden="true" />
-          <Dropdown menu={notificationMenu} trigger={['click']} placement="bottomRight">
-            <Tooltip title="通知">
-              <Button
-                type="text"
-                shape="circle"
-                className="topbar-icon-button"
-                aria-label="查看通知"
-                icon={<Badge dot><BellOutlined /></Badge>}
-              />
-            </Tooltip>
-          </Dropdown>
-          <Dropdown menu={profileMenu} trigger={['click']} placement="bottomRight">
-            <Button type="text" className="profile-button" aria-label="打开个人菜单">
-              <UserOutlined aria-hidden="true" />
-              <span>护理主管 · 白班</span>
-              <DownOutlined aria-hidden="true" />
-            </Button>
-          </Dropdown>
-        </div>
-      </header>
-
-      <main className="dashboard-main">
+    <div className="dashboard-page">
         <Breadcrumb
           className="page-breadcrumb"
           items={[
@@ -544,7 +369,7 @@ export function AdminDashboard() {
           <div>
             <div className="heading-title-line">
               <h1>风险与待办</h1>
-              <Tag color="blue">演示数据</Tag>
+              <Tag color="blue">本地演示数据</Tag>
             </div>
             <p>聚焦高风险与延误事项，按优先级采取行动，降低运营与照护风险。</p>
           </div>
@@ -743,11 +568,10 @@ export function AdminDashboard() {
 
             <div className="foundation-note" role="note">
               <CloudServerOutlined aria-hidden="true" />
-              <span><strong>M00 边界：</strong>当前页面只展示可交互的管理端基础壳和虚构 fixture；真实队列、权限与业务状态将在对应里程碑接入。</span>
+              <span><strong>M01 边界：</strong>身份、会话和访问范围已由后端校验；风险队列与运营指标仍为虚构 fixture，不代表实时业务状态。</span>
             </div>
           </>
         )}
-      </main>
     </div>
   );
 }

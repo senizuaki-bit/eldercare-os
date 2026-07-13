@@ -3,11 +3,13 @@ import { ApiOkResponse, ApiOperation, ApiServiceUnavailableResponse, ApiTags } f
 import type { ServiceConfig } from '@eldercare/config';
 import type { HealthResponse } from '@eldercare/contracts';
 import type { Response } from 'express';
+import { Public } from '../auth/auth.decorators.js';
 import { SERVICE_CONFIG } from '../tokens.js';
 import { ReadinessService } from './readiness.service.js';
 import { HealthResponseDto } from './health.dto.js';
 
 @ApiTags('health')
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(
