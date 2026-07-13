@@ -48,3 +48,35 @@ test('roles stay read-first and logout invalidates the protected route', async (
   await expect(page).toHaveURL(/\/login\?reason=required$/);
   await expect(page.getByText('请先登录后继续访问管理端。')).toBeVisible();
 });
+
+test('M02 operational directories expose scoped elder, room, staff and shift context', async ({ page }) => {
+  await login(page, '/elders');
+
+  await expect(page.getByRole('heading', { name: '老人档案', level: 1 })).toBeVisible();
+  await expect(page.getByText('虚构长者01')).toBeVisible();
+  await page.getByRole('button', { name: '快速详情' }).first().click();
+  const detailDrawer = page.getByRole('dialog');
+  await expect(detailDrawer.getByRole('heading', { name: /长者01 · 快速详情/ })).toBeVisible();
+  await expect(detailDrawer.getByText('快速详情只展示必要摘要')).toBeVisible();
+  await expect(detailDrawer.getByText('当前房间床位', { exact: true })).toBeVisible();
+
+  await page.goto('/facility/rooms');
+  await expect(page.getByRole('heading', { name: '房间床位', level: 1 })).toBeVisible();
+  await expect(page.getByRole('region', { name: '房间床位目录' })).toBeVisible();
+  await expect(page.getByText(/个可用床位/).first()).toBeVisible();
+  await expect(page.getByText(/虚构长者/)).toHaveCount(0);
+
+  await page.goto('/staff');
+  await expect(page.getByRole('heading', { name: '员工目录', level: 1 })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByText('虚构护工01')).toBeVisible();
+
+  await page.goto('/shifts');
+  await expect(page.getByRole('heading', { name: '周排班', level: 1 })).toBeVisible();
+  await expect(page.getByLabel('可横向滚动的周排班表')).toBeVisible();
+
+  const viewportOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(viewportOverflow).toBeLessThanOrEqual(1);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? ''))).toEqual([]);
+});

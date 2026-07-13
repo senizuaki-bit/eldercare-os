@@ -95,11 +95,29 @@ export function deriveQueryScope(
   const platformWide = activeScopes.some((scope) => scope.kind === 'PLATFORM');
   const organizationIds = new Set<string>();
   const facilityIds = new Set<string>();
+  const floorIds = new Set<string>();
+  const careTeamIds = new Set<string>();
+  const assignedElderIds = new Set<string>();
+  const linkedElderIds = new Set<string>();
+  const activeShiftFacilityIds = new Set<string>();
 
   for (const scope of activeScopes) {
     if (scope.kind === 'ORGANIZATION') organizationIds.add(scope.organizationId);
     if (scope.kind === 'FACILITY' && scope.facilityId !== undefined) {
       facilityIds.add(scope.facilityId);
+    }
+    if (scope.kind === 'FLOOR' && scope.resourceId !== undefined) floorIds.add(scope.resourceId);
+    if (scope.kind === 'CARE_TEAM' && scope.resourceId !== undefined) {
+      careTeamIds.add(scope.resourceId);
+    }
+    if (scope.kind === 'ASSIGNED_ELDER' && scope.resourceId !== undefined) {
+      assignedElderIds.add(scope.resourceId);
+    }
+    if (scope.kind === 'LINKED_ELDER' && scope.resourceId !== undefined) {
+      linkedElderIds.add(scope.resourceId);
+    }
+    if (scope.kind === 'ACTIVE_SHIFT' && scope.facilityId !== undefined) {
+      activeShiftFacilityIds.add(scope.facilityId);
     }
   }
 
@@ -107,5 +125,10 @@ export function deriveQueryScope(
     platformWide,
     organizationIds: [...organizationIds],
     facilityIds: [...facilityIds],
+    floorIds: [...floorIds],
+    careTeamIds: [...careTeamIds],
+    assignedElderIds: [...assignedElderIds],
+    linkedElderIds: [...linkedElderIds],
+    activeShiftFacilityIds: [...activeShiftFacilityIds],
   };
 }

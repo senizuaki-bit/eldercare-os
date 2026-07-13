@@ -49,7 +49,12 @@ export type AuthorizationReasonCode =
   | 'SCOPE_MISSING'
   | 'SCOPE_EXPIRED'
   | 'RESOURCE_RELATIONSHIP_MISSING'
-  | 'RESOURCE_POLICY_MISSING';
+  | 'RESOURCE_POLICY_MISSING'
+  | 'RELATIONSHIP_INACTIVE'
+  | 'SHIFT_INACTIVE'
+  | 'CONSENT_MISSING'
+  | 'CONSENT_WITHDRAWN'
+  | 'FIELD_NOT_SHARED';
 
 export interface AuthorizationDecision {
   readonly allowed: boolean;
@@ -62,6 +67,9 @@ export interface AuthorizationTarget {
   readonly resourceType?: string;
   readonly resourceId?: string;
   readonly ownerUserId?: string;
+  readonly elderId?: string;
+  readonly floorId?: string;
+  readonly careTeamId?: string;
 }
 
 export interface AuthorizationRequest {
@@ -77,4 +85,9 @@ export interface QueryScopeConstraint {
   readonly organizationIds: readonly string[];
   /** Facilities covered by an explicit FACILITY scope; these do not imply organization-wide access. */
   readonly facilityIds: readonly string[];
+  readonly floorIds: readonly string[];
+  readonly careTeamIds: readonly string[];
+  readonly assignedElderIds: readonly string[];
+  readonly linkedElderIds: readonly string[];
+  readonly activeShiftFacilityIds: readonly string[];
 }

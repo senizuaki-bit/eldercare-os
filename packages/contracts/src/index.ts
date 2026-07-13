@@ -5,6 +5,9 @@ export * from './audit.js';
 export * from './auth.js';
 export * from './common.js';
 export * from './identity.js';
+export * from './facility-directory.js';
+export * from './elder.js';
+export * from './staffing.js';
 
 export const healthCheckSchema = z
   .enum(['ok', 'error']);

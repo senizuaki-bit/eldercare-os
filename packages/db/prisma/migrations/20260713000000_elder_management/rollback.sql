@@ -1,0 +1,60 @@
+-- Explicit M02 rollback. Remove only M02 tables, types, and the M02 index added to data_scopes.
+DROP TABLE IF EXISTS "outbox_events";
+DROP TABLE IF EXISTS "elder_timeline_entries";
+DROP TABLE IF EXISTS "elder_care_assignments";
+DROP TABLE IF EXISTS "shift_assignment_scopes";
+DROP TABLE IF EXISTS "shift_assignments";
+DROP TABLE IF EXISTS "shifts";
+DROP TABLE IF EXISTS "team_memberships";
+DROP TABLE IF EXISTS "personal_baselines";
+DROP TABLE IF EXISTS "staff_profiles";
+DROP TABLE IF EXISTS "teams";
+DROP TABLE IF EXISTS "sharing_preferences";
+DROP TABLE IF EXISTS "consent_records";
+DROP TABLE IF EXISTS "communication_preferences";
+DROP TABLE IF EXISTS "accessibility_profiles";
+DROP TABLE IF EXISTS "emergency_contacts";
+DROP TABLE IF EXISTS "family_relationships";
+DROP TABLE IF EXISTS "elder_stays";
+DROP TABLE IF EXISTS "admission_records";
+DROP TABLE IF EXISTS "elders";
+DROP TABLE IF EXISTS "care_levels";
+DROP TABLE IF EXISTS "beds";
+DROP TABLE IF EXISTS "rooms";
+DROP TABLE IF EXISTS "zones";
+DROP TABLE IF EXISTS "floors";
+DROP TABLE IF EXISTS "buildings";
+
+DROP INDEX IF EXISTS "data_scopes_id_organization_id_facility_id_key";
+
+DROP TYPE IF EXISTS "OutboxStatus";
+DROP TYPE IF EXISTS "EventPrivacyClass";
+DROP TYPE IF EXISTS "EventActorType";
+DROP TYPE IF EXISTS "FamilyShareableField";
+DROP TYPE IF EXISTS "TimelineVisibility";
+DROP TYPE IF EXISTS "ElderCareAssignmentRole";
+DROP TYPE IF EXISTS "ShiftScopeKind";
+DROP TYPE IF EXISTS "ShiftAssignmentStatus";
+DROP TYPE IF EXISTS "ShiftStatus";
+DROP TYPE IF EXISTS "TeamMembershipRole";
+DROP TYPE IF EXISTS "TeamStatus";
+DROP TYPE IF EXISTS "StaffStatus";
+DROP TYPE IF EXISTS "CommunicationChannel";
+DROP TYPE IF EXISTS "SpeakingPace";
+DROP TYPE IF EXISTS "PreferredInputMode";
+DROP TYPE IF EXISTS "PreferredTextScale";
+DROP TYPE IF EXISTS "ConsentAuthority";
+DROP TYPE IF EXISTS "ConsentDecision";
+DROP TYPE IF EXISTS "ConsentPurpose";
+DROP TYPE IF EXISTS "PersonalBaselineDomain";
+DROP TYPE IF EXISTS "BaselineSource";
+DROP TYPE IF EXISTS "RelationshipVerificationStatus";
+DROP TYPE IF EXISTS "FamilyRelationshipType";
+DROP TYPE IF EXISTS "CareLevelStatus";
+DROP TYPE IF EXISTS "ElderStayStatus";
+DROP TYPE IF EXISTS "AdmissionStatus";
+DROP TYPE IF EXISTS "ElderRecordStatus";
+DROP TYPE IF EXISTS "BedOperationalStatus";
+DROP TYPE IF EXISTS "FacilityStructureStatus";
+
+-- btree_gist may predate M02 or be shared by another module; rollback leaves it installed.

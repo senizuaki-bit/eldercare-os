@@ -28,7 +28,15 @@ describe('resource extension points', () => {
 
   it('denies an unresolved relationship and uses an explicit resolver when registered', async () => {
     const registry = new ResourceRelationshipRegistry();
-    for (const kind of ['LINKED_ELDER', 'ASSIGNED_CAREGIVER', 'ACTIVE_SHIFT'] as const) {
+    for (const kind of [
+      'LINKED_ELDER',
+      'ASSIGNED_CAREGIVER',
+      'ASSIGNED_ELDER',
+      'ACTIVE_SHIFT',
+      'ACTIVE_SHIFT_FLOOR',
+      'CARE_TEAM_ELDER',
+      'OWN_ELDER_RECORD',
+    ] as const) {
       await expect(registry.isRelated(kind, input)).resolves.toBe(false);
     }
 

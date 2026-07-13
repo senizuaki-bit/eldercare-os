@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import { useState } from 'react';
 
+import { CaregiverElderContext, FamilyElderContext } from './scoped-elder-context';
 import type { Role } from './types';
 
 type VoiceStage = 'idle' | 'listening' | 'draft' | 'confirmed';
@@ -324,11 +325,12 @@ export function CaregiverHome({ onNavigate }: Readonly<{ onNavigate: (tab: strin
         <div className="intro-title-row">
           <div>
             <h1 id="caregiver-home-title">早班任务</h1>
-            <p>07:30–15:30 · 演示班次</p>
+            <p>当前有效班次 · 服务端权限校验</p>
           </div>
-          <FixtureBadge />
         </div>
       </section>
+
+      <CaregiverElderContext />
 
       <section className="urgent-task-card" aria-labelledby="urgent-task-title">
         <div className="card-title-row">
@@ -432,11 +434,12 @@ export function FamilyHome({ onNavigate }: Readonly<{ onNavigate: (tab: string) 
         <div className="intro-title-row">
           <div>
             <h1 id="family-home-title">今日照护摘要</h1>
-            <p>关联对象：演示长者</p>
+            <p>关联对象：按已验证关系与共享同意加载</p>
           </div>
-          <FixtureBadge />
         </div>
       </section>
+
+      <FamilyElderContext />
 
       <section className="privacy-notice" aria-label="家属隐私说明">
         <LockOutlined aria-hidden="true" />

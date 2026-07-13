@@ -106,7 +106,8 @@ describe('MobileExperience', () => {
         method: 'POST'
       })
     );
-    const requestInit = fetchMock.mock.calls[0]?.[1];
+    const logoutCall = fetchMock.mock.calls.find(([url]) => url === 'http://127.0.0.1:4000/auth/logout');
+    const requestInit = logoutCall?.[1];
     expect(new Headers(requestInit?.headers).get('x-csrf-token')).toBe('csrf-test-value');
     expect(onSignedOut).toHaveBeenCalledOnce();
   });

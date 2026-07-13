@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
 | M01 Auth/RBAC | COMPLETE | feat/m01-auth-rbac | passed | 2026-07-13; local milestone accepted, GitHub publish pending remote/CLI setup |
-| M02 Elder management | NOT_STARTED | feat/m02-elder-management | pending | |
+| M02 Elder management | IN_REVIEW | feat/m02-elder-management | pending browser decision | 2026-07-13; non-browser gates passed, independent review P0/P1=0; GitHub publish pending |
 | M03 Needs/work orders | NOT_STARTED | feat/m03-needs-workorders | pending | |
 | M04 Emergency | NOT_STARTED | feat/m04-emergency | pending | |
 | M05 IoT/offline | NOT_STARTED | feat/m05-iot-offline | pending | |

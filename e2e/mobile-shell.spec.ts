@@ -38,6 +38,9 @@ test('family portal shows the privacy-filtered summary and never a caregiver liv
   await login(page, 'family.demo');
   await expect(page).toHaveURL(/\/m\/family\/home$/);
   await expect(page.getByText('家属端首页')).toBeVisible();
+  await expect(page.getByRole('region', { name: '按关系和同意授权的老人档案' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '长者01', level: 2 })).toBeVisible();
+  await expect(page.getByText('已共享 2 类字段')).toBeVisible();
   await expect(page.getByLabel('家属隐私说明')).toContainText('已隐藏原始录音、完整对话、内部备注和护工实时位置');
   await expect(page.getByText(/护工当前位置|经度|纬度/)).toHaveCount(0);
 
@@ -47,4 +50,18 @@ test('family portal shows the privacy-filtered summary and never a caregiver liv
   await expect(page).toHaveURL(/\/login$/);
   await page.goto('/m/family/home');
   await expect(page).toHaveURL(/\/login$/);
+});
+
+test('caregiver portal limits elder context to the current effective shift', async ({ page }) => {
+  await login(page, 'caregiver.demo');
+  await expect(page).toHaveURL(/\/m\/caregiver\/home$/);
+  await expect(page.getByRole('region', { name: '当前有效班次内的老人档案' })).toBeVisible();
+  await expect(page.getByText('当前班次授权').first()).toBeVisible();
+  await expect(page.getByText('仅在有效班次内可见').first()).toBeVisible();
+  await expect(page.getByText(/家属关系|同意记录|原始音频|完整对话/)).toHaveCount(0);
+
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? ''))).toEqual([]);
 });

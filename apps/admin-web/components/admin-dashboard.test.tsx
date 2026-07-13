@@ -32,6 +32,21 @@ describe('AdminDashboard', () => {
     expect(screen.getByText(/身份、会话和访问范围已由后端校验/)).toBeInTheDocument();
   });
 
+  it('links the dashboard to meaningful M02 filtered directory views', () => {
+    renderDashboard();
+
+    expect(screen.getByRole('link', { name: /在院老人/ })).toHaveAttribute('href', '/elders?status=ACTIVE');
+    expect(screen.getByRole('link', { name: /可用床位/ })).toHaveAttribute(
+      'href',
+      '/facility/rooms?status=ACTIVE&occupancy=AVAILABLE'
+    );
+    expect(screen.getByRole('link', { name: /在职员工/ })).toHaveAttribute('href', '/staff?status=ACTIVE');
+    expect(screen.getByRole('link', { name: /待开始班次/ })).toHaveAttribute(
+      'href',
+      '/shifts?status=SCHEDULED&view=week'
+    );
+  });
+
   it('supports an accessible collapsible navigation rail', () => {
     renderDashboard();
 

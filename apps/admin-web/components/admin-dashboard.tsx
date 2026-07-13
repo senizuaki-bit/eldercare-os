@@ -1,6 +1,8 @@
 'use client';
 
 import {
+  ApartmentOutlined,
+  CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloudServerOutlined,
@@ -16,6 +18,7 @@ import {
   ReloadOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
+  TeamOutlined,
   WarningFilled,
   WifiOutlined
 } from '@ant-design/icons';
@@ -36,6 +39,7 @@ import {
   Tooltip
 } from 'antd';
 import type { TableColumnsType } from 'antd';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAdminShellSearch } from './admin-shell';
@@ -410,6 +414,36 @@ export function AdminDashboard() {
             <Button size="small" onClick={resetDemoState}>恢复实时演示</Button>
           </div>
         )}
+
+        <section className="directory-link-section" aria-labelledby="directory-link-title">
+          <Card className="directory-link-card" styles={{ body: { padding: 0 } }}>
+            <div className="directory-link-heading">
+              <div>
+                <h2 id="directory-link-title">运营基础目录</h2>
+                <p>从工作台进入已限定状态的 M02 列表；目标页继续按当前机构与院区校验范围。</p>
+              </div>
+              <Tag color="blue">只读入口</Tag>
+            </div>
+            <nav className="directory-link-grid" aria-label="运营基础目录快捷入口">
+              <Link href="/elders?status=ACTIVE">
+                <ApartmentOutlined aria-hidden="true" />
+                <span><strong>在院老人</strong><small>筛选：在院档案</small></span>
+              </Link>
+              <Link href="/facility/rooms?status=ACTIVE&occupancy=AVAILABLE">
+                <HomeOutlined aria-hidden="true" />
+                <span><strong>可用床位</strong><small>筛选：开放且有空位</small></span>
+              </Link>
+              <Link href="/staff?status=ACTIVE">
+                <TeamOutlined aria-hidden="true" />
+                <span><strong>在职员工</strong><small>筛选：当前在职</small></span>
+              </Link>
+              <Link href="/shifts?status=SCHEDULED&view=week">
+                <CalendarOutlined aria-hidden="true" />
+                <span><strong>待开始班次</strong><small>筛选：本周待开始</small></span>
+              </Link>
+            </nav>
+          </Card>
+        </section>
 
         {isBlockingState ? (
           <StateSurface state={demoState} onReset={resetDemoState} />
