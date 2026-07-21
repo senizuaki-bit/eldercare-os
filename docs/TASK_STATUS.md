@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
 | M01 Auth/RBAC | COMPLETE | feat/m01-auth-rbac | passed | 2026-07-13; local milestone accepted, GitHub publish pending remote/CLI setup |
-| M02 Elder management | COMPLETE | feat/m02-elder-management | passed | 2026-07-21; automated, security, accessibility, browser and design acceptance passed; milestone PR published from this branch |
+| M02 Elder management | COMPLETE | feat/m02-elder-management | passed | 2026-07-21; all acceptance gates passed; [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) opened as draft |
 | M03 Needs/work orders | NOT_STARTED | feat/m03-needs-workorders | pending | |
 | M04 Emergency | NOT_STARTED | feat/m04-emergency | pending | |
 | M05 IoT/offline | NOT_STARTED | feat/m05-iot-offline | pending | |
@@ -92,7 +92,7 @@ For each completed milestone record:
 
 ## M02 completion record
 
-- Commit/PR: branch `feat/m02-elder-management`; milestone commit subject `feat(m02): add elder and facility operations foundation`; the accepted branch is published through its GitHub milestone PR.
+- Commit/PR: branch `feat/m02-elder-management`; milestone commit `aab14f1` (`feat(m02): add elder and facility operations foundation`); [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) is open as a draft against `main`.
 - Migrations and rollback: `20260713000000_elder_management` adds facility directory, elder/admission/stay, family relationship, emergency contact, accessibility, communication preference, baseline, consent/sharing, staff/team/shift, assignment, timeline and transactional outbox models; `rollback.sql` is included. Migrate, repeat migrate, repeat seed, clean reset, and seed after reset passed against local PostgreSQL.
 - APIs/events/state machines: contract-backed CRUD and paginated reads under organization/facility-scoped elder, directory and staffing route families; family and caregiver projections expose only authorized elder fields. M02 creates transactional `OutboxEvent` records for mutations but intentionally does not start the M03 work-order state machine or asynchronous publisher early.
 - Permissions/consents/approvals: 16 M02 permissions cover elder, sensitive elder, facility directory, staff, team, shift, consent and relationship reads/writes. Backend guards combine permission, tenant/facility context, linked-elder, active-shift, team and assignment relationships; future-dated or revoked grants fail closed. Family sharing is a server-timestamped full replacement, an empty set revokes all fields, and sensitive reads are separately gated and audited.
