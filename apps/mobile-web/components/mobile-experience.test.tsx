@@ -1,9 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createAuthSession } from '../test/auth-fixtures';
 import { MobileExperience } from './mobile-experience';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('MobileExperience', () => {
   it('uses the authenticated elder principal and has no local role switch', () => {
@@ -60,6 +64,27 @@ describe('MobileExperience', () => {
     expect(screen.queryByText(/312 室/)).not.toBeInTheDocument();
   });
 
+  it('keeps the caregiver priority task before the assigned-elder roster', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      Response.json({
+        items: [],
+        pageInfo: { page: 1, pageSize: 20, total: 0, totalPages: 0 }
+      })
+    );
+
+    render(
+      <MobileExperience
+        onSignedOut={vi.fn()}
+        role="caregiver"
+        session={createAuthSession('caregiver')}
+      />
+    );
+
+    const priorityTask = screen.getByRole('heading', { name: '请确认演示用户的头晕反馈' });
+    const rosterState = await screen.findByText('当前没有可访问的老人档案');
+    expect(priorityTask.compareDocumentPosition(rosterState) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('keeps role-specific bottom navigation interactive', async () => {
     const user = userEvent.setup();
     render(
@@ -106,7 +131,8 @@ describe('MobileExperience', () => {
         method: 'POST'
       })
     );
-    const requestInit = fetchMock.mock.calls[0]?.[1];
+    const logoutCall = fetchMock.mock.calls.find(([url]) => url === 'http://127.0.0.1:4000/auth/logout');
+    const requestInit = logoutCall?.[1];
     expect(new Headers(requestInit?.headers).get('x-csrf-token')).toBe('csrf-test-value');
     expect(onSignedOut).toHaveBeenCalledOnce();
   });

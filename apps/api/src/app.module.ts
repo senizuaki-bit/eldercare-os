@@ -11,14 +11,18 @@ import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
 import { ReadinessService } from './health/readiness.service.js';
 import { IdentityModule } from './identity/identity.module.js';
+import { M02Module } from './m02/m02.module.js';
+import { M02ContextGuard } from './m02/m02-context.guard.js';
 
 @Module({
-  imports: [AppConfigModule, DatabaseModule, AuditModule, AuthModule, IdentityModule],
+  imports: [AppConfigModule, DatabaseModule, AuditModule, AuthModule, IdentityModule, M02Module],
   controllers: [HealthController],
   providers: [
     ReadinessService,
     PermissionGuard,
+    M02ContextGuard,
     { provide: APP_GUARD, useExisting: SessionGuard },
+    { provide: APP_GUARD, useExisting: M02ContextGuard },
     { provide: APP_GUARD, useExisting: CsrfGuard },
     { provide: APP_GUARD, useExisting: PermissionGuard },
   ],

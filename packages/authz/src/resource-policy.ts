@@ -7,7 +7,11 @@ import type {
 export type ResourceRelationshipKind =
   | 'LINKED_ELDER'
   | 'ASSIGNED_CAREGIVER'
-  | 'ACTIVE_SHIFT';
+  | 'ASSIGNED_ELDER'
+  | 'ACTIVE_SHIFT'
+  | 'ACTIVE_SHIFT_FLOOR'
+  | 'CARE_TEAM_ELDER'
+  | 'OWN_ELDER_RECORD';
 
 export interface ResourceRelationshipInput {
   readonly context: AuthorizationContext;

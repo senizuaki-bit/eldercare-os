@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
 | M01 Auth/RBAC | COMPLETE | feat/m01-auth-rbac | passed | 2026-07-13; local milestone accepted, GitHub publish pending remote/CLI setup |
-| M02 Elder management | NOT_STARTED | feat/m02-elder-management | pending | |
+| M02 Elder management | COMPLETE | feat/m02-elder-management | passed | 2026-07-21; automated, security, accessibility, browser and design acceptance passed; milestone PR published from this branch |
 | M03 Needs/work orders | NOT_STARTED | feat/m03-needs-workorders | pending | |
 | M04 Emergency | NOT_STARTED | feat/m04-emergency | pending | |
 | M05 IoT/offline | NOT_STARTED | feat/m05-iot-offline | pending | |
@@ -89,3 +89,24 @@ For each completed milestone record:
 - Journey/test mapping: authentication and routing tests cover valid/invalid login, CSRF, logout, context switching, session invalidation, cross-organization/cross-facility indistinguishable denial, insufficient permission, facility-manager anti-escalation, audit redaction, protected mobile portals and offline cache denial. This is the access-control foundation for journeys A–J; no M02 elder or later business workflow is claimed complete.
 - Known limitations: local-demo password authentication only; no external IdP, MFA, password recovery or production credential lifecycle. Admin role/access pages are read-first except the protected API replacement endpoint used by integration coverage. Mobile home content remains fictional shell data. Elder, family relationship, staff/team/shift business records and consent-aware domain views begin in M02.
 - Next milestone prerequisites: publish the M01 branch and draft PR when a GitHub remote/CLI are available, then create `feat/m02-elder-management` from accepted M01 and implement facility/room/bed, elder/family, staff/team/shift, consent-aware views and their negative authorization tests without starting M03.
+
+## M02 completion record
+
+- Commit/PR: branch `feat/m02-elder-management`; milestone commit subject `feat(m02): add elder and facility operations foundation`; the accepted branch is published through its GitHub milestone PR.
+- Migrations and rollback: `20260713000000_elder_management` adds facility directory, elder/admission/stay, family relationship, emergency contact, accessibility, communication preference, baseline, consent/sharing, staff/team/shift, assignment, timeline and transactional outbox models; `rollback.sql` is included. Migrate, repeat migrate, repeat seed, clean reset, and seed after reset passed against local PostgreSQL.
+- APIs/events/state machines: contract-backed CRUD and paginated reads under organization/facility-scoped elder, directory and staffing route families; family and caregiver projections expose only authorized elder fields. M02 creates transactional `OutboxEvent` records for mutations but intentionally does not start the M03 work-order state machine or asynchronous publisher early.
+- Permissions/consents/approvals: 16 M02 permissions cover elder, sensitive elder, facility directory, staff, team, shift, consent and relationship reads/writes. Backend guards combine permission, tenant/facility context, linked-elder, active-shift, team and assignment relationships; future-dated or revoked grants fail closed. Family sharing is a server-timestamped full replacement, an empty set revokes all fields, and sensitive reads are separately gated and audited.
+- Commands and exact result:
+  - `pnpm lint` — root E2E/scripts lint plus 22/22 Turbo tasks passed.
+  - `pnpm typecheck` — root TypeScript check plus 22/22 Turbo tasks passed.
+  - `pnpm test` — 22/22 Turbo tasks passed; admin 34/34, mobile 40/40, API 28/28, contracts 43/43, authz 23/23 and DB 25/25 passed.
+  - `pnpm test:integration` — 20/20 Turbo tasks passed; API 28/28 includes 16/16 M02 contract, pagination, projection, mutation, idempotency and negative-authorization cases against real PostgreSQL and Redis.
+  - `pnpm build` — 16/16 workspace builds passed; both Next.js applications produced their production route manifests.
+  - `pnpm test:e2e` — 12/12 tests passed at admin 1440/1280 and mobile 375/360 viewports, covering scoped directories, elder/caregiver/family projections, privacy boundaries, role denial, responsive behavior and serious/critical Axe checks.
+  - `pnpm test:e2e:offline` — 1/1 production PWA test passed; protected portal content was not restored from cache while offline.
+  - `pnpm db:migrate`, repeated migrate, repeated seed, `pnpm db:reset`, and seed after reset — passed against local PostgreSQL.
+  - `pnpm compose:validate`, `pnpm security:scan`, and `pnpm smoke:services` — passed; API and worker liveness/readiness were healthy.
+- Screenshots/routes: admin `/elders`, `/facility/rooms`, `/staff`, `/shifts`; mobile `/m/elder/home`, `/m/caregiver/home`, `/m/family/home`; Swagger `/docs`. Native-size reference/implementation comparison, contact sheets and dual-viewport evidence are under `docs/design/qa/`; `design-qa.md` ends with `final result: passed`.
+- Journey/test mapping: M02 supplies the organization/facility, room/bed, elder/family, staff/team/shift and consent-aware data foundation for journey A and later emergency, device, content, activity, commerce and agent journeys. It does not claim the M03 need-to-work-order workflow, M04 emergency flow or M10 compliance lifecycle complete.
+- Known limitations: admin creation actions remain honest disabled affordances until a reviewed admission/staffing workflow is in scope; the directory UI is read-first while authorized CRUD is available through the API. Fake seed identities and local providers remain mandatory. Node 24.14.0 is below the repository's declared `>=24.16.0` engine floor and emits a warning, although every acceptance gate passes.
+- Next milestone prerequisites: review and merge the M02 PR, then create `feat/m03-needs-workorders` from the accepted M02 line and implement the elder request, deterministic risk check, work-order lifecycle, caregiver response, family-safe summary, elder review and audit flow without starting M04 early.

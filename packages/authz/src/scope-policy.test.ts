@@ -171,6 +171,11 @@ describe('deriveQueryScope', () => {
       platformWide: false,
       organizationIds: ['org-a'],
       facilityIds: ['facility-a'],
+      floorIds: [],
+      careTeamIds: [],
+      assignedElderIds: [],
+      linkedElderIds: [],
+      activeShiftFacilityIds: [],
     });
   });
 
@@ -188,6 +193,67 @@ describe('deriveQueryScope', () => {
       platformWide: false,
       organizationIds: [],
       facilityIds: ['facility-a'],
+      floorIds: [],
+      careTeamIds: [],
+      assignedElderIds: [],
+      linkedElderIds: [],
+      activeShiftFacilityIds: [],
+    });
+  });
+
+  it('derives narrow elder, floor, care-team and active-shift constraints without widening them', () => {
+    expect(
+      deriveQueryScope([
+        {
+          kind: 'ACTIVE_SHIFT',
+          scopeKey: 'active-shift:shift-1',
+          organizationId: 'org-a',
+          facilityId: 'facility-a',
+          validFrom: '2026-07-12T08:00:00.000Z',
+          validUntil: '2026-07-12T20:00:00.000Z',
+        },
+        {
+          kind: 'FLOOR',
+          scopeKey: 'floor:floor-1',
+          organizationId: 'org-a',
+          facilityId: 'facility-a',
+          resourceType: 'FLOOR',
+          resourceId: 'floor-1',
+        },
+        {
+          kind: 'CARE_TEAM',
+          scopeKey: 'care-team:team-1',
+          organizationId: 'org-a',
+          facilityId: 'facility-a',
+          resourceType: 'CARE_TEAM',
+          resourceId: 'team-1',
+        },
+        {
+          kind: 'ASSIGNED_ELDER',
+          scopeKey: 'assigned-elder:elder-1',
+          organizationId: 'org-a',
+          facilityId: 'facility-a',
+          resourceType: 'ELDER',
+          resourceId: 'elder-1',
+        },
+        {
+          kind: 'LINKED_ELDER',
+          scopeKey: 'linked-elder:elder-2',
+          organizationId: 'org-a',
+          facilityId: 'facility-a',
+          resourceType: 'ELDER',
+          resourceId: 'elder-2',
+        },
+      ], new Date('2026-07-12T10:00:00.000Z')),
+    ).toEqual({
+      platformWide: false,
+      organizationIds: [],
+      facilityIds: [],
+      floorIds: ['floor-1'],
+      careTeamIds: ['team-1'],
+      assignedElderIds: ['elder-1'],
+      linkedElderIds: ['elder-2'],
+      activeShiftFacilityIds: ['facility-a'],
     });
   });
 });

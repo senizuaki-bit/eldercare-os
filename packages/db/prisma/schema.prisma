@@ -50,6 +50,200 @@ enum AuditOutcome {
   FAILURE
 }
 
+enum FacilityStructureStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum BedOperationalStatus {
+  ACTIVE
+  OUT_OF_SERVICE
+  ARCHIVED
+}
+
+enum ElderRecordStatus {
+  ACTIVE
+  DISCHARGED
+  ARCHIVED
+}
+
+enum AdmissionStatus {
+  ADMITTED
+  DISCHARGED
+  CANCELLED
+}
+
+enum ElderStayStatus {
+  PLANNED
+  ACTIVE
+  DISCHARGED
+  CANCELLED
+}
+
+enum CareLevelStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum FamilyRelationshipType {
+  SPOUSE
+  CHILD
+  SIBLING
+  GUARDIAN
+  OTHER
+}
+
+enum RelationshipVerificationStatus {
+  PENDING
+  VERIFIED
+  REVOKED
+}
+
+enum BaselineSource {
+  ELDER_STATED
+  STAFF_CONFIRMED
+  INFERRED
+}
+
+enum PersonalBaselineDomain {
+  ROUTINE
+  COMMUNICATION
+  MOBILITY
+  SOCIAL
+  SLEEP
+  DIET
+  EMOTIONAL_EXPRESSION
+  OTHER
+}
+
+enum ConsentPurpose {
+  VOICE_CAPTURE
+  TRANSCRIPTION_AI_ANALYSIS
+  EMOTION_TREND
+  ELDER_LOCATION
+  CAREGIVER_SHIFT_LOCATION
+  FAMILY_SHARING
+  AI_MEMORY
+  CONTENT_PERSONALIZATION
+  COMMERCIAL_RECOMMENDATION
+  FAMILY_PAYMENT
+  PRODUCT_IMPROVEMENT_TRAINING
+}
+
+enum ConsentDecision {
+  GRANTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum ConsentAuthority {
+  ELDER
+  AUTHORIZED_REPRESENTATIVE
+  LEGAL_BASIS
+}
+
+enum PreferredTextScale {
+  STANDARD
+  LARGE
+  EXTRA_LARGE
+}
+
+enum PreferredInputMode {
+  TOUCH
+  VOICE
+  HUMAN_ASSISTED
+}
+
+enum SpeakingPace {
+  SLOW
+  STANDARD
+}
+
+enum CommunicationChannel {
+  VOICE
+  TEXT
+  IN_PERSON
+}
+
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum TeamStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum TeamMembershipRole {
+  MEMBER
+  LEAD
+}
+
+enum ShiftStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ShiftAssignmentStatus {
+  ASSIGNED
+  ACCEPTED
+  CANCELLED
+}
+
+enum ShiftScopeKind {
+  FACILITY
+  FLOOR
+  ZONE
+}
+
+enum ElderCareAssignmentRole {
+  PRIMARY
+  SUPPORT
+}
+
+enum TimelineVisibility {
+  INTERNAL
+  ELDER_VISIBLE
+  FAMILY_ELIGIBLE
+}
+
+enum FamilyShareableField {
+  PREFERRED_NAME
+  CURRENT_RESIDENCE
+  CARE_LEVEL
+  ACCESSIBILITY_SUMMARY
+  COMMUNICATION_PREFERENCE
+  PERSONAL_BASELINE_SUMMARY
+  CONSENT_SUMMARY
+  TIMELINE_SUMMARY
+}
+
+enum EventActorType {
+  USER
+  SYSTEM
+  DEVICE
+  AGENT
+}
+
+enum EventPrivacyClass {
+  OPERATIONS
+  SENSITIVE
+  HIGHLY_SENSITIVE
+}
+
+enum OutboxStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
 model SystemMetadata {
   key       String   @id @db.VarChar(128)
   value     Json
@@ -71,6 +265,7 @@ model Organization {
   userRoles    UserRole[]
   authSessions AuthSession[]
   auditEvents  AuditEvent[]
+  outboxEvents OutboxEvent[]
 
   @@index([status])
   @@map("organizations")
@@ -86,10 +281,35 @@ model Facility {
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  dataScopes   DataScope[]
-  authSessions AuthSession[]
-  auditEvents  AuditEvent[]
+  organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  dataScopes               DataScope[]
+  authSessions             AuthSession[]
+  auditEvents              AuditEvent[]
+  buildings                Building[]
+  floors                   Floor[]
+  zones                    Zone[]
+  rooms                    Room[]
+  beds                     Bed[]
+  careLevels               CareLevel[]
+  elders                   Elder[]
+  admissions               AdmissionRecord[]
+  elderStays               ElderStay[]
+  familyRelationships      FamilyRelationship[]
+  emergencyContacts        EmergencyContact[]
+  accessibilityProfiles    AccessibilityProfile[]
+  communicationPreferences CommunicationPreference[]
+  personalBaselines        PersonalBaseline[]
+  consentRecords           ConsentRecord[]
+  sharingPreferences       SharingPreference[]
+  staffProfiles            StaffProfile[]
+  teams                    Team[]
+  teamMemberships          TeamMembership[]
+  shifts                   Shift[]
+  shiftAssignments         ShiftAssignment[]
+  shiftAssignmentScopes    ShiftAssignmentScope[]
+  elderCareAssignments     ElderCareAssignment[]
+  elderTimelineEntries     ElderTimelineEntry[]
+  outboxEvents             OutboxEvent[]
 
   @@unique([organizationId, code])
   @@unique([id, organizationId])
@@ -109,12 +329,19 @@ model User {
   createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  passwordCredential PasswordCredential?
-  userRoles          UserRole[]          @relation("AssignedUser")
-  createdAssignments UserRole[]          @relation("UserRoleCreatedBy")
-  revokedAssignments UserRole[]          @relation("UserRoleRevokedBy")
-  sessions           AuthSession[]
-  auditEvents        AuditEvent[]
+  passwordCredential          PasswordCredential?
+  userRoles                   UserRole[]           @relation("AssignedUser")
+  createdAssignments          UserRole[]           @relation("UserRoleCreatedBy")
+  revokedAssignments          UserRole[]           @relation("UserRoleRevokedBy")
+  sessions                    AuthSession[]
+  auditEvents                 AuditEvent[]
+  elderProfile                Elder?               @relation("ElderPortalUser")
+  staffProfiles               StaffProfile[]       @relation("StaffProfileUser")
+  familyRelationships         FamilyRelationship[] @relation("FamilyRelationshipUser")
+  verifiedFamilyRelationships FamilyRelationship[] @relation("FamilyRelationshipVerifier")
+  baselineSources             PersonalBaseline[]   @relation("PersonalBaselineSourceUser")
+  recordedConsents            ConsentRecord[]      @relation("ConsentRecordedByUser")
+  timelineEntries             ElderTimelineEntry[] @relation("TimelineActorUser")
 
   @@index([status])
   @@map("users")
@@ -218,6 +445,7 @@ model DataScope {
   facility Facility? @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
 
   @@unique([userRoleId, scopeKey])
+  @@unique([id, organizationId, facilityId])
   @@index([organizationId, kind, facilityId])
   @@index([resourceType, resourceId])
   @@map("data_scopes")
@@ -272,4 +500,651 @@ model AuditEvent {
   @@index([resourceType, resourceId, occurredAt(sort: Desc)])
   @@index([correlationId])
   @@map("audit_events")
+}
+
+model Building {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  facilityId     String                  @map("facility_id") @db.Uuid
+  code           String                  @db.VarChar(64)
+  name           String                  @db.VarChar(160)
+  status         FacilityStructureStatus @default(ACTIVE)
+  sortOrder      Int                     @default(0) @map("sort_order")
+  version        Int                     @default(1)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  floors   Floor[]
+
+  @@unique([facilityId, code])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, status, sortOrder])
+  @@map("buildings")
+}
+
+model Floor {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  facilityId     String                  @map("facility_id") @db.Uuid
+  buildingId     String                  @map("building_id") @db.Uuid
+  code           String                  @db.VarChar(64)
+  name           String                  @db.VarChar(160)
+  levelNumber    Int                     @map("level_number")
+  status         FacilityStructureStatus @default(ACTIVE)
+  sortOrder      Int                     @default(0) @map("sort_order")
+  version        Int                     @default(1)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility              Facility               @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  building              Building               @relation(fields: [buildingId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  zones                 Zone[]
+  rooms                 Room[]
+  shiftAssignmentScopes ShiftAssignmentScope[]
+
+  @@unique([buildingId, code])
+  @@unique([buildingId, levelNumber])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, status, sortOrder])
+  @@map("floors")
+}
+
+model Zone {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  facilityId     String                  @map("facility_id") @db.Uuid
+  floorId        String                  @map("floor_id") @db.Uuid
+  code           String                  @db.VarChar(64)
+  name           String                  @db.VarChar(160)
+  status         FacilityStructureStatus @default(ACTIVE)
+  sortOrder      Int                     @default(0) @map("sort_order")
+  version        Int                     @default(1)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility              Facility               @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  floor                 Floor                  @relation(fields: [floorId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  rooms                 Room[]
+  shiftAssignmentScopes ShiftAssignmentScope[]
+
+  @@unique([floorId, code])
+  @@unique([id, organizationId, facilityId, floorId])
+  @@index([organizationId, facilityId, status, sortOrder])
+  @@map("zones")
+}
+
+model Room {
+  id             String                  @id @default(uuid()) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  facilityId     String                  @map("facility_id") @db.Uuid
+  floorId        String                  @map("floor_id") @db.Uuid
+  zoneId         String?                 @map("zone_id") @db.Uuid
+  code           String                  @db.VarChar(64)
+  name           String                  @db.VarChar(160)
+  status         FacilityStructureStatus @default(ACTIVE)
+  version        Int                     @default(1)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  floor    Floor    @relation(fields: [floorId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  zone     Zone?    @relation(fields: [zoneId, organizationId, facilityId, floorId], references: [id, organizationId, facilityId, floorId], onDelete: Restrict)
+  beds     Bed[]
+
+  @@unique([floorId, code])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, zoneId, status])
+  @@map("rooms")
+}
+
+model Bed {
+  id                String               @id @default(uuid()) @db.Uuid
+  organizationId    String               @map("organization_id") @db.Uuid
+  facilityId        String               @map("facility_id") @db.Uuid
+  roomId            String               @map("room_id") @db.Uuid
+  code              String               @db.VarChar(64)
+  label             String               @db.VarChar(160)
+  operationalStatus BedOperationalStatus @default(ACTIVE) @map("operational_status")
+  version           Int                  @default(1)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility    @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  room     Room        @relation(fields: [roomId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  stays    ElderStay[]
+
+  @@unique([roomId, code])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, operationalStatus])
+  @@map("beds")
+}
+
+model CareLevel {
+  id             String          @id @default(uuid()) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  facilityId     String          @map("facility_id") @db.Uuid
+  code           String          @db.VarChar(64)
+  name           String          @db.VarChar(160)
+  rank           Int
+  description    String?         @db.VarChar(1000)
+  status         CareLevelStatus @default(ACTIVE)
+  version        Int             @default(1)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elders   Elder[]
+
+  @@unique([facilityId, code])
+  @@unique([facilityId, rank])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, status])
+  @@map("care_levels")
+}
+
+model Elder {
+  id                 String            @id @default(uuid()) @db.Uuid
+  organizationId     String            @map("organization_id") @db.Uuid
+  facilityId         String            @map("facility_id") @db.Uuid
+  portalUserId       String?           @unique @map("portal_user_id") @db.Uuid
+  recordNumber       String            @map("record_number") @db.VarChar(64)
+  displayName        String            @map("display_name") @db.VarChar(160)
+  preferredName      String?           @map("preferred_name") @db.VarChar(80)
+  birthDate          DateTime?         @map("birth_date") @db.Date
+  currentCareLevelId String?           @map("current_care_level_id") @db.Uuid
+  status             ElderRecordStatus @default(ACTIVE)
+  version            Int               @default(1)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility                Facility                 @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  portalUser              User?                    @relation("ElderPortalUser", fields: [portalUserId], references: [id], onDelete: Restrict)
+  currentCareLevel        CareLevel?               @relation(fields: [currentCareLevelId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  admissions              AdmissionRecord[]
+  stays                   ElderStay[]
+  familyRelationships     FamilyRelationship[]
+  emergencyContacts       EmergencyContact[]
+  accessibilityProfile    AccessibilityProfile?
+  communicationPreference CommunicationPreference?
+  personalBaselines       PersonalBaseline[]
+  consentRecords          ConsentRecord[]
+  careAssignments         ElderCareAssignment[]
+  timelineEntries         ElderTimelineEntry[]
+
+  @@unique([facilityId, recordNumber])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, status])
+  @@index([displayName])
+  @@map("elders")
+}
+
+model AdmissionRecord {
+  id                  String          @id @default(uuid()) @db.Uuid
+  organizationId      String          @map("organization_id") @db.Uuid
+  facilityId          String          @map("facility_id") @db.Uuid
+  elderId             String          @map("elder_id") @db.Uuid
+  admissionNumber     String          @map("admission_number") @db.VarChar(64)
+  status              AdmissionStatus @default(ADMITTED)
+  admittedAt          DateTime        @map("admitted_at") @db.Timestamptz(3)
+  dischargedAt        DateTime?       @map("discharged_at") @db.Timestamptz(3)
+  admissionReasonCode String?         @map("admission_reason_code") @db.VarChar(64)
+  dischargeReasonCode String?         @map("discharge_reason_code") @db.VarChar(64)
+  version             Int             @default(1)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility    @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder    Elder       @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  stays    ElderStay[]
+
+  @@unique([facilityId, admissionNumber])
+  @@unique([id, elderId, organizationId, facilityId])
+  @@index([organizationId, facilityId, status])
+  @@index([elderId, admittedAt(sort: Desc)])
+  @@map("admission_records")
+}
+
+model ElderStay {
+  id                  String          @id @default(uuid()) @db.Uuid
+  organizationId      String          @map("organization_id") @db.Uuid
+  facilityId          String          @map("facility_id") @db.Uuid
+  admissionRecordId   String?         @map("admission_record_id") @db.Uuid
+  elderId             String          @map("elder_id") @db.Uuid
+  bedId               String          @map("bed_id") @db.Uuid
+  previousStayId      String?         @map("previous_stay_id") @db.Uuid
+  status              ElderStayStatus @default(PLANNED)
+  admittedAt          DateTime        @map("admitted_at") @db.Timestamptz(3)
+  dischargedAt        DateTime?       @map("discharged_at") @db.Timestamptz(3)
+  admissionReasonCode String?         @map("admission_reason_code") @db.VarChar(64)
+  dischargeReasonCode String?         @map("discharge_reason_code") @db.VarChar(64)
+  version             Int             @default(1)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility        Facility         @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  admissionRecord AdmissionRecord? @relation(fields: [admissionRecordId, elderId, organizationId, facilityId], references: [id, elderId, organizationId, facilityId], onDelete: Restrict)
+  elder           Elder            @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  bed             Bed              @relation(fields: [bedId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  previousStay    ElderStay?       @relation("ElderStayHistory", fields: [previousStayId, elderId, organizationId, facilityId], references: [id, elderId, organizationId, facilityId], onDelete: Restrict)
+  nextStays       ElderStay[]      @relation("ElderStayHistory")
+
+  @@unique([id, elderId, organizationId, facilityId])
+  @@index([bedId, admittedAt, dischargedAt])
+  @@index([elderId, admittedAt, dischargedAt])
+  @@index([admissionRecordId, admittedAt])
+  @@map("elder_stays")
+}
+
+model FamilyRelationship {
+  id                String                         @id @default(uuid()) @db.Uuid
+  organizationId    String                         @map("organization_id") @db.Uuid
+  facilityId        String                         @map("facility_id") @db.Uuid
+  elderId           String                         @map("elder_id") @db.Uuid
+  familyUserId      String                         @map("family_user_id") @db.Uuid
+  relationshipKind  FamilyRelationshipType         @map("relationship_kind")
+  relationshipLabel String?                        @map("relationship_label") @db.VarChar(80)
+  status            RelationshipVerificationStatus @default(PENDING)
+  activeFrom        DateTime                       @default(now()) @map("active_from") @db.Timestamptz(3)
+  activeUntil       DateTime?                      @map("active_until") @db.Timestamptz(3)
+  verifiedAt        DateTime?                      @map("verified_at") @db.Timestamptz(3)
+  revokedAt         DateTime?                      @map("revoked_at") @db.Timestamptz(3)
+  verifiedByUserId  String?                        @map("verified_by_user_id") @db.Uuid
+  version           Int                            @default(1)
+  createdAt         DateTime                       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility           Facility            @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder              Elder               @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  familyUser         User                @relation("FamilyRelationshipUser", fields: [familyUserId], references: [id], onDelete: Restrict)
+  verifiedBy         User?               @relation("FamilyRelationshipVerifier", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
+  sharingPreferences SharingPreference[]
+  emergencyContacts  EmergencyContact[]
+
+  @@unique([elderId, familyUserId])
+  @@unique([id, elderId, organizationId, facilityId])
+  @@index([familyUserId, status, activeUntil])
+  @@index([organizationId, facilityId, status])
+  @@map("family_relationships")
+}
+
+model EmergencyContact {
+  id                   String   @id @default(uuid()) @db.Uuid
+  organizationId       String   @map("organization_id") @db.Uuid
+  facilityId           String   @map("facility_id") @db.Uuid
+  elderId              String   @map("elder_id") @db.Uuid
+  familyRelationshipId String?  @map("family_relationship_id") @db.Uuid
+  displayName          String   @map("display_name") @db.VarChar(160)
+  relationshipLabel    String   @map("relationship_label") @db.VarChar(80)
+  contactValue         String   @map("contact_value") @db.VarChar(160)
+  priority             Int      @default(1)
+  isPrimary            Boolean  @default(false) @map("is_primary")
+  active               Boolean  @default(true)
+  version              Int      @default(1)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility           Facility            @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder              Elder               @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  familyRelationship FamilyRelationship? @relation(fields: [familyRelationshipId, elderId, organizationId, facilityId], references: [id, elderId, organizationId, facilityId], onDelete: Restrict)
+
+  @@unique([elderId, priority])
+  @@index([organizationId, facilityId, elderId, active])
+  @@map("emergency_contacts")
+}
+
+model AccessibilityProfile {
+  id                    String             @id @default(uuid()) @db.Uuid
+  organizationId        String             @map("organization_id") @db.Uuid
+  facilityId            String             @map("facility_id") @db.Uuid
+  elderId               String             @unique @map("elder_id") @db.Uuid
+  preferredTextScale    PreferredTextScale @default(STANDARD) @map("preferred_text_scale")
+  highContrast          Boolean            @default(false) @map("high_contrast")
+  reducedMotion         Boolean            @default(false) @map("reduced_motion")
+  hearingSupport        Boolean            @default(false) @map("hearing_support")
+  visionSupport         Boolean            @default(false) @map("vision_support")
+  mobilitySupport       Boolean            @default(false) @map("mobility_support")
+  preferredInputMode    PreferredInputMode @default(TOUCH) @map("preferred_input_mode")
+  humanHandoffPreferred Boolean            @default(false) @map("human_handoff_preferred")
+  notes                 String?            @db.VarChar(2000)
+  version               Int                @default(1)
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder    Elder    @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+
+  @@unique([elderId, organizationId, facilityId])
+  @@index([organizationId, facilityId])
+  @@map("accessibility_profiles")
+}
+
+model CommunicationPreference {
+  id                   String               @id @default(uuid()) @db.Uuid
+  organizationId       String               @map("organization_id") @db.Uuid
+  facilityId           String               @map("facility_id") @db.Uuid
+  elderId              String               @unique @map("elder_id") @db.Uuid
+  preferredLanguage    String               @default("zh-CN") @map("preferred_language") @db.VarChar(35)
+  speakingPace         SpeakingPace         @default(STANDARD) @map("speaking_pace")
+  repeatKeyInformation Boolean              @default(false) @map("repeat_key_information")
+  preferredChannel     CommunicationChannel @default(IN_PERSON) @map("preferred_channel")
+  quietHoursStart      DateTime?            @map("quiet_hours_start") @db.Time(0)
+  quietHoursEnd        DateTime?            @map("quiet_hours_end") @db.Time(0)
+  version              Int                  @default(1)
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder    Elder    @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+
+  @@unique([elderId, organizationId, facilityId])
+  @@index([organizationId, facilityId])
+  @@map("communication_preferences")
+}
+
+model PersonalBaseline {
+  id                        String                 @id @default(uuid()) @db.Uuid
+  organizationId            String                 @map("organization_id") @db.Uuid
+  facilityId                String                 @map("facility_id") @db.Uuid
+  elderId                   String                 @map("elder_id") @db.Uuid
+  baselineKey               String                 @map("baseline_key") @db.VarChar(64)
+  domain                    PersonalBaselineDomain
+  value                     String                 @db.VarChar(2000)
+  sourceKind                BaselineSource         @map("source_kind")
+  sourceUserId              String?                @map("source_user_id") @db.Uuid
+  confirmedByStaffProfileId String?                @map("confirmed_by_staff_profile_id") @db.Uuid
+  inferenceMethod           String?                @map("inference_method") @db.VarChar(160)
+  confidence                Float?
+  observedAt                DateTime               @map("observed_at") @db.Timestamptz(3)
+  validFrom                 DateTime               @default(now()) @map("valid_from") @db.Timestamptz(3)
+  supersededAt              DateTime?              @map("superseded_at") @db.Timestamptz(3)
+  version                   Int                    @default(1)
+  createdAt                 DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                 DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility         Facility      @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder            Elder         @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  sourceUser       User?         @relation("PersonalBaselineSourceUser", fields: [sourceUserId], references: [id], onDelete: SetNull)
+  confirmedByStaff StaffProfile? @relation(fields: [confirmedByStaffProfileId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+
+  @@index([elderId, domain, baselineKey, supersededAt])
+  @@index([organizationId, facilityId, sourceKind])
+  @@map("personal_baselines")
+}
+
+model ConsentRecord {
+  id               String           @id @default(uuid()) @db.Uuid
+  organizationId   String           @map("organization_id") @db.Uuid
+  facilityId       String           @map("facility_id") @db.Uuid
+  elderId          String           @map("elder_id") @db.Uuid
+  purpose          ConsentPurpose
+  decision         ConsentDecision
+  authority        ConsentAuthority
+  consentVersion   Int              @map("consent_version")
+  effectiveAt      DateTime         @map("effective_at") @db.Timestamptz(3)
+  expiresAt        DateTime?        @map("expires_at") @db.Timestamptz(3)
+  supersededAt     DateTime?        @map("superseded_at") @db.Timestamptz(3)
+  reasonCode       String?          @map("reason_code") @db.VarChar(64)
+  recordedByUserId String           @map("recorded_by_user_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  facility           Facility            @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder              Elder               @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  recordedBy         User                @relation("ConsentRecordedByUser", fields: [recordedByUserId], references: [id], onDelete: Restrict)
+  sharingPreferences SharingPreference[]
+
+  @@unique([elderId, purpose, consentVersion])
+  @@unique([id, elderId, organizationId, facilityId])
+  @@index([organizationId, facilityId, purpose, decision])
+  @@map("consent_records")
+}
+
+model SharingPreference {
+  id                   String               @id @default(uuid()) @db.Uuid
+  organizationId       String               @map("organization_id") @db.Uuid
+  facilityId           String               @map("facility_id") @db.Uuid
+  elderId              String               @map("elder_id") @db.Uuid
+  familyRelationshipId String               @map("family_relationship_id") @db.Uuid
+  consentRecordId      String?              @map("consent_record_id") @db.Uuid
+  field                FamilyShareableField
+  allowed              Boolean
+  validFrom            DateTime             @map("valid_from") @db.Timestamptz(3)
+  validUntil           DateTime?            @map("valid_until") @db.Timestamptz(3)
+  version              Int                  @default(1)
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  facility           Facility           @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  familyRelationship FamilyRelationship @relation(fields: [familyRelationshipId, elderId, organizationId, facilityId], references: [id, elderId, organizationId, facilityId], onDelete: Restrict)
+  consentRecord      ConsentRecord?     @relation(fields: [consentRecordId, elderId, organizationId, facilityId], references: [id, elderId, organizationId, facilityId], onDelete: Restrict)
+
+  @@unique([familyRelationshipId, field, version])
+  @@index([elderId, familyRelationshipId, validUntil])
+  @@index([organizationId, facilityId, field])
+  @@map("sharing_preferences")
+}
+
+model StaffProfile {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  facilityId     String      @map("facility_id") @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  employeeCode   String      @map("employee_code") @db.VarChar(64)
+  displayName    String      @map("display_name") @db.VarChar(160)
+  jobTitle       String      @map("job_title") @db.VarChar(120)
+  status         StaffStatus @default(ACTIVE)
+  hiredAt        DateTime?   @map("hired_at") @db.Date
+  endedAt        DateTime?   @map("ended_at") @db.Date
+  primaryTeamId  String?     @map("primary_team_id") @db.Uuid
+  version        Int         @default(1)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility           Facility           @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  user               User               @relation("StaffProfileUser", fields: [userId], references: [id], onDelete: Restrict)
+  primaryTeam        Team?              @relation("StaffPrimaryTeam", fields: [primaryTeamId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  teamMemberships    TeamMembership[]
+  shiftAssignments   ShiftAssignment[]
+  confirmedBaselines PersonalBaseline[]
+
+  @@unique([facilityId, employeeCode])
+  @@unique([facilityId, userId])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, status])
+  @@map("staff_profiles")
+}
+
+model Team {
+  id             String     @id @default(uuid()) @db.Uuid
+  organizationId String     @map("organization_id") @db.Uuid
+  facilityId     String     @map("facility_id") @db.Uuid
+  code           String     @db.VarChar(64)
+  name           String     @db.VarChar(160)
+  description    String?    @db.VarChar(1000)
+  status         TeamStatus @default(ACTIVE)
+  version        Int        @default(1)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility     Facility         @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  primaryStaff StaffProfile[]   @relation("StaffPrimaryTeam")
+  memberships  TeamMembership[]
+  shifts       Shift[]
+
+  @@unique([facilityId, code])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, status])
+  @@map("teams")
+}
+
+model TeamMembership {
+  id             String             @id @default(uuid()) @db.Uuid
+  organizationId String             @map("organization_id") @db.Uuid
+  facilityId     String             @map("facility_id") @db.Uuid
+  teamId         String             @map("team_id") @db.Uuid
+  staffProfileId String             @map("staff_profile_id") @db.Uuid
+  role           TeamMembershipRole @default(MEMBER)
+  activeFrom     DateTime           @default(now()) @map("active_from") @db.Timestamptz(3)
+  activeUntil    DateTime?          @map("active_until") @db.Timestamptz(3)
+  version        Int                @default(1)
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility     Facility     @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  team         Team         @relation(fields: [teamId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  staffProfile StaffProfile @relation(fields: [staffProfileId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+
+  @@index([teamId, activeUntil])
+  @@index([staffProfileId, activeUntil])
+  @@map("team_memberships")
+}
+
+model Shift {
+  id             String      @id @default(uuid()) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  facilityId     String      @map("facility_id") @db.Uuid
+  teamId         String?     @map("team_id") @db.Uuid
+  code           String      @db.VarChar(64)
+  name           String      @db.VarChar(160)
+  startsAt       DateTime    @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime    @map("ends_at") @db.Timestamptz(3)
+  status         ShiftStatus @default(SCHEDULED)
+  version        Int         @default(1)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility    Facility          @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  team        Team?             @relation(fields: [teamId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  assignments ShiftAssignment[]
+
+  @@unique([facilityId, code])
+  @@unique([id, organizationId, facilityId])
+  @@index([organizationId, facilityId, startsAt, endsAt])
+  @@index([teamId, startsAt])
+  @@map("shifts")
+}
+
+model ShiftAssignment {
+  id             String                @id @default(uuid()) @db.Uuid
+  organizationId String                @map("organization_id") @db.Uuid
+  facilityId     String                @map("facility_id") @db.Uuid
+  shiftId        String                @map("shift_id") @db.Uuid
+  staffProfileId String                @map("staff_profile_id") @db.Uuid
+  status         ShiftAssignmentStatus @default(ASSIGNED)
+  version        Int                   @default(1)
+  assignedAt     DateTime              @default(now()) @map("assigned_at") @db.Timestamptz(3)
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility         Facility               @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  shift            Shift                  @relation(fields: [shiftId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  staffProfile     StaffProfile           @relation(fields: [staffProfileId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  scopes           ShiftAssignmentScope[]
+  elderAssignments ElderCareAssignment[]
+
+  @@unique([shiftId, staffProfileId])
+  @@unique([id, organizationId, facilityId])
+  @@index([staffProfileId, status])
+  @@index([organizationId, facilityId, status])
+  @@map("shift_assignments")
+}
+
+model ShiftAssignmentScope {
+  id                String         @id @default(uuid()) @db.Uuid
+  organizationId    String         @map("organization_id") @db.Uuid
+  facilityId        String         @map("facility_id") @db.Uuid
+  shiftAssignmentId String         @map("shift_assignment_id") @db.Uuid
+  kind              ShiftScopeKind
+  floorId           String?        @map("floor_id") @db.Uuid
+  zoneId            String?        @map("zone_id") @db.Uuid
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  facility        Facility        @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  shiftAssignment ShiftAssignment @relation(fields: [shiftAssignmentId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Cascade)
+  floor           Floor?          @relation(fields: [floorId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  zone            Zone?           @relation(fields: [zoneId, organizationId, facilityId, floorId], references: [id, organizationId, facilityId, floorId], onDelete: Restrict)
+
+  @@index([shiftAssignmentId, kind])
+  @@index([organizationId, facilityId, floorId, zoneId])
+  @@map("shift_assignment_scopes")
+}
+
+model ElderCareAssignment {
+  id                String                  @id @default(uuid()) @db.Uuid
+  organizationId    String                  @map("organization_id") @db.Uuid
+  facilityId        String                  @map("facility_id") @db.Uuid
+  shiftAssignmentId String                  @map("shift_assignment_id") @db.Uuid
+  elderId           String                  @map("elder_id") @db.Uuid
+  role              ElderCareAssignmentRole @default(PRIMARY)
+  version           Int                     @default(1)
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  facility        Facility        @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  shiftAssignment ShiftAssignment @relation(fields: [shiftAssignmentId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Cascade)
+  elder           Elder           @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+
+  @@unique([shiftAssignmentId, elderId])
+  @@index([elderId, role])
+  @@map("elder_care_assignments")
+}
+
+model ElderTimelineEntry {
+  id                 String             @id @default(uuid()) @db.Uuid
+  organizationId     String             @map("organization_id") @db.Uuid
+  facilityId         String             @map("facility_id") @db.Uuid
+  elderId            String             @map("elder_id") @db.Uuid
+  eventType          String             @map("event_type") @db.VarChar(64)
+  sourceResourceType String             @map("source_resource_type") @db.VarChar(64)
+  sourceResourceId   String             @map("source_resource_id") @db.VarChar(128)
+  visibility         TimelineVisibility
+  safeSummaryCode    String             @map("safe_summary_code") @db.VarChar(64)
+  safeMetadata       Json               @default("{}") @map("safe_metadata")
+  actorUserId        String?            @map("actor_user_id") @db.Uuid
+  correlationId      String             @map("correlation_id") @db.VarChar(128)
+  occurredAt         DateTime           @map("occurred_at") @db.Timestamptz(3)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  facility Facility @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+  elder    Elder    @relation(fields: [elderId, organizationId, facilityId], references: [id, organizationId, facilityId], onDelete: Restrict)
+  actor    User?    @relation("TimelineActorUser", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([elderId, occurredAt(sort: Desc)])
+  @@index([organizationId, facilityId, eventType, occurredAt(sort: Desc)])
+  @@index([correlationId])
+  @@map("elder_timeline_entries")
+}
+
+model OutboxEvent {
+  eventId          String            @id @map("event_id") @db.VarChar(26)
+  eventType        String            @map("event_type") @db.VarChar(128)
+  schemaVersion    String            @map("schema_version") @db.VarChar(16)
+  organizationId   String            @map("organization_id") @db.Uuid
+  facilityId       String?           @map("facility_id") @db.Uuid
+  aggregateType    String            @map("aggregate_type") @db.VarChar(64)
+  aggregateId      String            @map("aggregate_id") @db.VarChar(128)
+  aggregateVersion Int               @map("aggregate_version")
+  actorType        EventActorType    @map("actor_type")
+  actorId          String            @map("actor_id") @db.VarChar(128)
+  correlationId    String            @map("correlation_id") @db.VarChar(128)
+  causationId      String?           @map("causation_id") @db.VarChar(26)
+  idempotencyKey   String            @map("idempotency_key") @db.VarChar(192)
+  occurredAt       DateTime          @map("occurred_at") @db.Timestamptz(3)
+  payload          Json
+  privacyClass     EventPrivacyClass @map("privacy_class")
+  status           OutboxStatus      @default(PENDING)
+  attempts         Int               @default(0)
+  availableAt      DateTime          @default(now()) @map("available_at") @db.Timestamptz(3)
+  publishedAt      DateTime?         @map("published_at") @db.Timestamptz(3)
+  lastErrorCode    String?           @map("last_error_code") @db.VarChar(96)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  facility     Facility?    @relation(fields: [facilityId, organizationId], references: [id, organizationId], onDelete: Restrict)
+
+  @@unique([organizationId, eventType, idempotencyKey])
+  @@index([status, availableAt])
+  @@index([aggregateType, aggregateId, aggregateVersion])
+  @@index([correlationId])
+  @@map("outbox_events")
 }

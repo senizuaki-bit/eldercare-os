@@ -28,7 +28,7 @@ export function createOpenApiDocument(
     new DocumentBuilder()
       .setTitle('Eldercare Operations API')
       .setDescription(
-        'M01 identity, session, tenant authorization and audit endpoints. Care business APIs remain out of scope.',
+        'M02 tenant-aware identity, facility directory, elder record, consent and staffing operations.',
       )
       .setVersion(config.appVersion)
       .addCookieAuth('eldercare_session', {

@@ -1013,6 +1013,143 @@ button:disabled {
   border-color: var(--brand-200);
 }
 
+.scoped-elder-card {
+  background: var(--neutral-0);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 17px;
+}
+
+.scoped-elder-list,
+.scoped-elder-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.scoped-elder-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.scoped-elder-heading > div {
+  min-width: 0;
+}
+
+.scoped-elder-heading > .anticon {
+  color: var(--brand-600);
+  flex: 0 0 auto;
+  font-size: 24px;
+  margin-top: 3px;
+}
+
+.scoped-elder-heading h3 {
+  color: var(--neutral-900);
+  font-size: 20px;
+  line-height: 1.35;
+  margin: 10px 0 0;
+}
+
+.scoped-elder-location,
+.scoped-elder-safety {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+}
+
+.scoped-elder-location {
+  color: var(--neutral-800);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+
+.scoped-elder-location > .anticon,
+.scoped-elder-safety > .anticon {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.scoped-elder-meta {
+  color: var(--neutral-600);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 7px 0 0;
+}
+
+.scoped-elder-safety {
+  background: var(--brand-50);
+  border-radius: 11px;
+  color: var(--brand-800);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 13px 0 0;
+  padding: 11px;
+}
+
+.scoped-attention-list {
+  background: var(--warning-50);
+  border-radius: 11px;
+  color: var(--warning-700);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 13px 0 0;
+  padding: 11px 11px 11px 31px;
+}
+
+.scoped-elder-state {
+  align-items: flex-start;
+  display: grid;
+  gap: 10px 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.scoped-elder-state > .anticon {
+  color: var(--brand-600);
+  font-size: 24px;
+}
+
+.scoped-elder-state strong {
+  color: var(--neutral-900);
+  font-size: 16px;
+}
+
+.scoped-elder-state p {
+  color: var(--neutral-600);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 5px 0 0;
+}
+
+.scoped-retry-button {
+  grid-column: 1 / -1;
+  min-height: 44px;
+  width: 100%;
+}
+
+.scoped-elder-card.is-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scoped-elder-skeleton {
+  background: var(--neutral-100);
+  border-radius: 999px;
+  display: block;
+  height: 14px;
+  width: 100%;
+}
+
+.scoped-elder-skeleton-short {
+  height: 24px;
+  width: 42%;
+}
+
 .privacy-notice > .anticon {
   color: var(--brand-600);
 }
