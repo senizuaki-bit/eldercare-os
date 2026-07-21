@@ -1046,7 +1046,7 @@ button:disabled {
   margin-top: 3px;
 }
 
-.scoped-elder-heading h2 {
+.scoped-elder-heading h3 {
   color: var(--neutral-900);
   font-size: 20px;
   line-height: 1.35;

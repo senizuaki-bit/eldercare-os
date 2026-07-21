@@ -1560,7 +1560,7 @@ input:focus-visible,
 
 .room-directory-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, minmax(250px, 1fr));
   gap: 16px;
   padding: 18px;
 }
@@ -1845,14 +1845,21 @@ input:focus-visible,
 
 .shift-week-grid {
   width: 100%;
-  min-width: 980px;
+  min-width: 1420px;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
+.shift-week-grid tr > :first-child {
+  width: 132px;
+}
+
+.shift-week-grid tr > :not(:first-child) {
+  width: calc((100% - 132px) / 7);
+}
+
 .shift-week-grid th,
 .shift-week-grid td {
-  width: calc(100% / 7);
   border-right: 1px solid var(--admin-border);
   border-bottom: 1px solid var(--admin-border);
   vertical-align: top;
@@ -1890,15 +1897,18 @@ input:focus-visible,
 }
 
 .shift-card-title {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
   gap: 6px;
 }
 
 .shift-card-title strong {
   color: var(--admin-text);
   line-height: 1.4;
+}
+
+.shift-card-title .ant-tag {
+  justify-self: start;
+  margin-inline-end: 0;
 }
 
 .shift-card p {
@@ -1920,7 +1930,7 @@ input:focus-visible,
 .shift-empty-cell {
   display: block;
   padding-top: 18px;
-  color: #758395;
+  color: var(--admin-text-secondary);
   font-size: 14px;
   text-align: center;
 }
@@ -1934,7 +1944,7 @@ input:focus-visible,
 
 @media (max-width: 1380px) {
   .room-directory-grid {
-    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
   }
 }
 

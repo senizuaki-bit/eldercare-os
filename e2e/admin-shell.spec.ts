@@ -18,7 +18,7 @@ test('authenticated user directory is scoped, searchable and accessible', async 
   await expect(page.getByRole('status', { name: '当前访问范围' })).toContainText('青岚');
   await expect(page.getByRole('table')).toBeVisible();
   await expect(page.getByText('facility.director')).toBeVisible();
-  await expect(page.getByText('device.manager')).toHaveCount(0);
+  await expect(page.getByText('platform.admin')).toHaveCount(0);
 
   const search = page.getByRole('searchbox', { name: '搜索当前页面' });
   await search.fill('nursing.supervisor');
@@ -53,7 +53,7 @@ test('M02 operational directories expose scoped elder, room, staff and shift con
   await login(page, '/elders');
 
   await expect(page.getByRole('heading', { name: '老人档案', level: 1 })).toBeVisible();
-  await expect(page.getByText('虚构长者01')).toBeVisible();
+  await expect(page.getByText('长者01', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '快速详情' }).first().click();
   const detailDrawer = page.getByRole('dialog');
   await expect(detailDrawer.getByRole('heading', { name: /长者01 · 快速详情/ })).toBeVisible();

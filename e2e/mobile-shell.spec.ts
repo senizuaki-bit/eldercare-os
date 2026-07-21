@@ -39,7 +39,7 @@ test('family portal shows the privacy-filtered summary and never a caregiver liv
   await expect(page).toHaveURL(/\/m\/family\/home$/);
   await expect(page.getByText('家属端首页')).toBeVisible();
   await expect(page.getByRole('region', { name: '按关系和同意授权的老人档案' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '长者01', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '长者01', level: 3 })).toBeVisible();
   await expect(page.getByText('已共享 2 类字段')).toBeVisible();
   await expect(page.getByLabel('家属隐私说明')).toContainText('已隐藏原始录音、完整对话、内部备注和护工实时位置');
   await expect(page.getByText(/护工当前位置|经度|纬度/)).toHaveCount(0);

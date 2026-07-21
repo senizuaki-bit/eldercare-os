@@ -44,7 +44,7 @@ describe('scoped elder context', () => {
 
     render(<FamilyElderContext />);
 
-    expect(await screen.findByRole('heading', { name: '林阿姨' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '林阿姨', level: 3 })).toBeInTheDocument();
     expect(screen.getByText(/青松楼 · 二层 · 208 室 · A 床/)).toBeInTheDocument();
     expect(screen.getByText(/未返回护工实时位置、内部备注、原始音频或完整对话/)).toBeInTheDocument();
     expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -79,7 +79,7 @@ describe('scoped elder context', () => {
 
     render(<CaregiverElderContext />);
 
-    expect(await screen.findByRole('heading', { name: '林安宁' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '林安宁', level: 3 })).toBeInTheDocument();
     expect(screen.getByText('当前班次授权')).toBeInTheDocument();
     expect(screen.getByText('交流时请放慢语速')).toBeInTheDocument();
   });

@@ -330,8 +330,6 @@ export function CaregiverHome({ onNavigate }: Readonly<{ onNavigate: (tab: strin
         </div>
       </section>
 
-      <CaregiverElderContext />
-
       <section className="urgent-task-card" aria-labelledby="urgent-task-title">
         <div className="card-title-row">
           <span className="status-label warning-label">
@@ -375,6 +373,8 @@ export function CaregiverHome({ onNavigate }: Readonly<{ onNavigate: (tab: strin
         {feedback ? <CheckCircleOutlined aria-hidden="true" /> : null}
         <span>{feedback}</span>
       </div>
+
+      <CaregiverElderContext />
 
       <section className="content-section" aria-labelledby="caregiver-tasks-title">
         <SectionHeading

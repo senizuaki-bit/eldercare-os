@@ -68,7 +68,7 @@ function FamilyCard({ elder }: Readonly<{ elder: FamilyElderSummary }>) {
       <div className="scoped-elder-heading">
         <div>
           <span className="status-label success-label">已验证关系 · 按同意共享</span>
-          <h2 id={`family-elder-${elder.id}`}>{elder.preferredName ?? elder.displayName}</h2>
+          <h3 id={`family-elder-${elder.id}`}>{elder.preferredName ?? elder.displayName}</h3>
         </div>
         <LockOutlined aria-hidden="true" />
       </div>
@@ -96,7 +96,7 @@ function CaregiverCard({ elder }: Readonly<{ elder: CaregiverElderSummary }>) {
       <div className="scoped-elder-heading">
         <div>
           <span className="status-label info-label">当前班次授权</span>
-          <h2 id={`caregiver-elder-${elder.id}`}>{elder.preferredName ?? elder.displayName}</h2>
+          <h3 id={`caregiver-elder-${elder.id}`}>{elder.preferredName ?? elder.displayName}</h3>
         </div>
         <SafetyCertificateOutlined aria-hidden="true" />
       </div>

@@ -216,7 +216,7 @@ export function RoomDirectoryPage() {
       page: String(page),
       pageSize: String(pageSize),
       occupancy: occupancyFilter,
-      sort: 'code',
+      sort: 'occupiedBedCount',
       direction: 'asc'
     });
     if (deferredSearch.length > 0) next.set('search', deferredSearch);

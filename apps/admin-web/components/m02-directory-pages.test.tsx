@@ -210,6 +210,7 @@ describe('M02 admin directory pages', () => {
     expect(screen.getByRole('combobox', { name: '筛选楼栋' })).toBeDisabled();
     expect(screen.getByRole('combobox', { name: '筛选楼层' })).toBeDisabled();
     expect(screen.queryByText('周奶奶（虚构）')).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => requestUrl(url).includes('sort=occupiedBedCount'))).toBe(true);
   });
 
   it('keeps room capacity visible and warns when bed-level detail cannot be loaded', async () => {

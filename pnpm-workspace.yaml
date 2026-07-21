@@ -5,9 +5,10 @@ packages:
 minimumReleaseAgeExclude:
   - eslint@10.7.0
 
-onlyBuiltDependencies:
-  - '@prisma/engines'
-  - '@swc/core'
-  - esbuild
-  - prisma
-  - sharp
+allowBuilds:
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  esbuild: true
+  prisma: true
+  sharp: true
