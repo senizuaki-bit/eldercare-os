@@ -44,8 +44,47 @@ describe('MobileExperience', () => {
     expect(screen.getByText('服务器会话已确认 · 业务结果以服务端为准')).toBeInTheDocument();
     expect(screen.getByText('AI 关怀助手')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /点击说需求/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /紧急求助/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /紧急求助/ })).toBeEnabled();
     expect(screen.queryByText(/演示角色|切换界面角色/)).not.toBeInTheDocument();
+  });
+
+  it('opens the elder emergency flow in an honest pending state', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const url = requestUrl(input);
+      if (
+        url.endsWith('/elder/emergencies') &&
+        init?.method === 'POST'
+      ) {
+        return new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener(
+            'abort',
+            () => reject(new DOMException('aborted', 'AbortError')),
+            { once: true }
+          );
+        });
+      }
+      return Promise.resolve(Response.json({ items: [], pageInfo }));
+    });
+    render(
+      <MobileExperience
+        onSignedOut={vi.fn()}
+        role="elder"
+        session={createAuthSession('elder')}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /紧急求助/ }));
+
+    expect(window.location.pathname).toBe('/m/elder/emergency');
+    expect(
+      screen.getByRole('heading', { name: '正在发送求助' })
+    ).toBeInTheDocument();
+    expect(screen.queryByText('求助已经登记')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '拨打 120' })).toHaveAttribute(
+      'href',
+      'tel:120'
+    );
   });
 
   it('navigates to the explicit elder voice workflow and supports an end action', async () => {

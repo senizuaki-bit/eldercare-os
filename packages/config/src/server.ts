@@ -106,6 +106,37 @@ const rawServiceConfigSchema = z.object({
     .default(900),
   MQTT_URL: mqttUrlSchema,
   MQTT_TOPIC_PREFIX: mqttPrefixSchema,
+  MQTT_EMERGENCY_CLIENT_ID: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/)
+    .default('eldercare-m04-worker-emergency-v1'),
+  EMERGENCY_LOCATION_RETENTION_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(720)
+    .default(24),
+  EMERGENCY_DUPLICATE_WINDOW_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(300)
+    .default(30),
+  EMERGENCY_FALLBACK_PHONE: z
+    .string()
+    .trim()
+    .min(3)
+    .max(32)
+    .regex(/^\+?[0-9][0-9 ()-]*$/)
+    .default('400-000-0120'),
+  EMERGENCY_QUEUE_PREFIX: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9:_-]*$/)
+    .default('eldercare:emergency'),
   READINESS_TIMEOUT_MS: z.coerce.number().int().min(100).max(30_000).default(1500),
   AUTH_SESSION_IDLE_TTL_SECONDS: z.coerce
     .number()
@@ -171,6 +202,11 @@ export const serviceConfigSchema = rawServiceConfigSchema.transform((value) => (
   voiceStagingSweepMinAgeSeconds: value.VOICE_STAGING_SWEEP_MIN_AGE_SECONDS,
   mqttUrl: value.MQTT_URL,
   mqttTopicPrefix: value.MQTT_TOPIC_PREFIX,
+  mqttEmergencyClientId: value.MQTT_EMERGENCY_CLIENT_ID,
+  emergencyLocationRetentionHours: value.EMERGENCY_LOCATION_RETENTION_HOURS,
+  emergencyDuplicateWindowSeconds: value.EMERGENCY_DUPLICATE_WINDOW_SECONDS,
+  emergencyFallbackPhone: value.EMERGENCY_FALLBACK_PHONE,
+  emergencyQueuePrefix: value.EMERGENCY_QUEUE_PREFIX,
   readinessTimeoutMs: value.READINESS_TIMEOUT_MS,
   authSessionIdleTtlSeconds: value.AUTH_SESSION_IDLE_TTL_SECONDS,
   authSessionAbsoluteTtlSeconds: value.AUTH_SESSION_ABSOLUTE_TTL_SECONDS,

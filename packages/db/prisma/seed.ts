@@ -5,10 +5,12 @@ import {
   M01_PERMISSIONS,
   M02_PERMISSIONS,
   M03_PERMISSIONS,
+  M04_PERMISSIONS,
   ROLE_CODES,
   type M01Permission,
   type M02Permission,
   type M03Permission,
+  type M04Permission,
   type Role,
 } from '@eldercare/authz';
 import { hashPassword } from '@eldercare/authz/server';
@@ -58,6 +60,7 @@ const ids = {
   auditM01: '90000000-0000-4000-8000-000000000001',
   auditM02: '90000000-0000-4000-8000-000000000002',
   auditM03: '90000000-0000-4000-8000-000000000003',
+  auditM04: '90000000-0000-4000-8000-000000000004',
 } as const;
 
 const buildingIds = [fixedId('81000000', 1), fixedId('81000000', 2)] as const;
@@ -84,7 +87,7 @@ const roleIds = Object.fromEntries(
   ROLE_CODES.map((role, index) => [role, fixedId('40000000', index + 1)]),
 ) as Record<Role, string>;
 
-type SeedPermission = M01Permission | M02Permission | M03Permission;
+type SeedPermission = M01Permission | M02Permission | M03Permission | M04Permission;
 
 const permissionDefinitions: readonly (readonly [SeedPermission, string])[] = [
   [M01_PERMISSIONS.SESSION_SELF_READ, '查看当前会话'],
@@ -128,6 +131,17 @@ const permissionDefinitions: readonly (readonly [SeedPermission, string])[] = [
   [M03_PERMISSIONS.FAMILY_SUMMARY_PUBLISH, '发布家属安全摘要'],
   [M03_PERMISSIONS.RATING_CREATE, '创建服务评价'],
   [M03_PERMISSIONS.RATING_READ, '查看服务评价'],
+  [M04_PERMISSIONS.EMERGENCY_SIGNAL_CREATE, '创建紧急信号'],
+  [M04_PERMISSIONS.EMERGENCY_READ, '查看授权紧急事件'],
+  [M04_PERMISSIONS.EMERGENCY_ASSIGN, '指派紧急响应人员'],
+  [M04_PERMISSIONS.EMERGENCY_ACKNOWLEDGE, '确认紧急事件'],
+  [M04_PERMISSIONS.EMERGENCY_RESPOND, '记录紧急响应进展'],
+  [M04_PERMISSIONS.EMERGENCY_RESOLVE, '完成人工紧急处置'],
+  [M04_PERMISSIONS.EMERGENCY_REVIEW, '复盘紧急事件'],
+  [M04_PERMISSIONS.EMERGENCY_ESCALATE, '人工升级紧急事件'],
+  [M04_PERMISSIONS.EMERGENCY_FAMILY_SUMMARY_READ, '查看家属可见紧急摘要'],
+  [M04_PERMISSIONS.EMERGENCY_NOTIFICATION_PREFERENCE_MANAGE, '管理紧急通知偏好'],
+  [M04_PERMISSIONS.EMERGENCY_POLICY_READ, '查看紧急升级策略'],
 ];
 
 const permissionIds = Object.fromEntries(
@@ -169,6 +183,7 @@ const rolePermissionMap: Partial<Record<Role, readonly SeedPermission[]>> = {
     M01_PERMISSIONS.ROLE_READ,
     ...Object.values(M02_PERMISSIONS),
     ...Object.values(M03_PERMISSIONS),
+    ...Object.values(M04_PERMISSIONS),
   ],
   CAREGIVER: [
     ...selfSessionPermissions,
@@ -180,10 +195,16 @@ const rolePermissionMap: Partial<Record<Role, readonly SeedPermission[]>> = {
     M03_PERMISSIONS.NEED_READ,
     M03_PERMISSIONS.WORK_ORDER_READ,
     M03_PERMISSIONS.WORK_ORDER_TRANSITION,
+    M04_PERMISSIONS.EMERGENCY_READ,
+    M04_PERMISSIONS.EMERGENCY_ACKNOWLEDGE,
+    M04_PERMISSIONS.EMERGENCY_RESPOND,
+    M04_PERMISSIONS.EMERGENCY_RESOLVE,
   ],
   DEVICE_MANAGER: [
     ...selfSessionPermissions,
     M01_PERMISSIONS.FACILITY_READ,
+    M04_PERMISSIONS.EMERGENCY_SIGNAL_CREATE,
+    M04_PERMISSIONS.EMERGENCY_POLICY_READ,
   ],
   ELDER: [
     ...selfSessionPermissions,
@@ -198,6 +219,8 @@ const rolePermissionMap: Partial<Record<Role, readonly SeedPermission[]>> = {
     M03_PERMISSIONS.WORK_ORDER_READ,
     M03_PERMISSIONS.WORK_ORDER_VERIFY,
     M03_PERMISSIONS.RATING_CREATE,
+    M04_PERMISSIONS.EMERGENCY_SIGNAL_CREATE,
+    M04_PERMISSIONS.EMERGENCY_READ,
   ],
   FAMILY: [
     ...selfSessionPermissions,
@@ -206,6 +229,8 @@ const rolePermissionMap: Partial<Record<Role, readonly SeedPermission[]>> = {
     M02_PERMISSIONS.ELDER_TIMELINE_READ,
     M03_PERMISSIONS.FAMILY_SUMMARY_READ,
     M03_PERMISSIONS.RATING_CREATE,
+    M04_PERMISSIONS.EMERGENCY_FAMILY_SUMMARY_READ,
+    M04_PERMISSIONS.EMERGENCY_NOTIFICATION_PREFERENCE_MANAGE,
   ],
 };
 
@@ -340,6 +365,21 @@ const M03_AUDIT_SAFE_COUNTS = {
   workOrders: M03_SEED_EXPECTATIONS.workOrders,
   assignments: M03_SEED_EXPECTATIONS.assignments,
   transitions: M03_SEED_EXPECTATIONS.transitions,
+} as const;
+
+const M04_SEED_EXPECTATIONS = {
+  sourceBindings: 1,
+  escalationPolicies: 1,
+  escalationSteps: 3,
+  events: 4,
+  signals: 4,
+  relatedEvents: 1,
+  acknowledgements: 2,
+  responders: 2,
+  milestones: 4,
+  resolutions: 1,
+  reviews: 1,
+  familySummaries: 2,
 } as const;
 
 function startOfShanghaiWeek(timestamp: number): number {
@@ -487,6 +527,29 @@ async function seed(): Promise<void> {
         organizationId: ids.organizations.qinglan,
         facilityId: ids.facilities.qinglanMain,
       };
+      await transaction.emergencyNotificationDelivery.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyFamilySummary.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyCommandReceipt.deleteMany({ where: mainFacilityFilter });
+      await transaction.familyEmergencyNotificationPreference.deleteMany({
+        where: mainFacilityFilter,
+      });
+      await transaction.emergencyReview.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyResolution.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyEscalation.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyResponseMilestone.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyAcknowledgement.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyResponderAssignment.deleteMany({
+        where: mainFacilityFilter,
+      });
+      await transaction.emergencyResponder.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyRelatedEvent.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyTransition.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyLocationSnapshot.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencySignal.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencyEvent.deleteMany({ where: mainFacilityFilter });
+      await transaction.escalationStep.deleteMany({ where: mainFacilityFilter });
+      await transaction.escalationPolicy.deleteMany({ where: mainFacilityFilter });
+      await transaction.emergencySourceBinding.deleteMany({ where: mainFacilityFilter });
       await transaction.rating.deleteMany({ where: mainFacilityFilter });
       await transaction.familySummary.deleteMany({ where: mainFacilityFilter });
       await transaction.serviceCompletion.deleteMany({ where: mainFacilityFilter });
@@ -1476,6 +1539,582 @@ async function seed(): Promise<void> {
         ],
       });
 
+      const emergencyPolicyId = fixedId('b4100000', 1);
+      const emergencyStepIds = {
+        acknowledgement: fixedId('b4200000', 1),
+        arrival: fixedId('b4200000', 2),
+        resolution: fixedId('b4200000', 3),
+      } as const;
+      const emergencyEventIds = {
+        overdueOpen: fixedId('b4300000', 1),
+        responding: fixedId('b4300000', 2),
+        reviewed: fixedId('b4300000', 3),
+        relatedOpen: fixedId('b4300000', 4),
+      } as const;
+      const emergencySourceBindingId = fixedId('b4000000', 1);
+      const emergencyOpenAt = new Date(seedStartedAt - 2 * 60 * 1000);
+      const emergencyRelatedAt = new Date(emergencyOpenAt.getTime() + 20_000);
+      const emergencyRespondingOpenedAt = new Date(seedStartedAt - 12 * 60 * 1000);
+      const emergencyRespondingAcknowledgedAt = new Date(
+        emergencyRespondingOpenedAt.getTime() + 45_000,
+      );
+      const emergencyRespondingAt = new Date(
+        emergencyRespondingAcknowledgedAt.getTime() + 45_000,
+      );
+      const emergencyOnSiteAt = new Date(emergencyRespondingAt.getTime() + 4 * 60 * 1000);
+      const emergencyReviewedOpenedAt = new Date(seedStartedAt - 2 * DAY);
+      const emergencyReviewedAcknowledgedAt = new Date(
+        emergencyReviewedOpenedAt.getTime() + 30_000,
+      );
+      const emergencyReviewedRespondingAt = new Date(
+        emergencyReviewedAcknowledgedAt.getTime() + 60_000,
+      );
+      const emergencyReviewedOnSiteAt = new Date(
+        emergencyReviewedRespondingAt.getTime() + 3 * 60 * 1000,
+      );
+      const emergencyResolvedAt = new Date(
+        emergencyReviewedOnSiteAt.getTime() + 12 * 60 * 1000,
+      );
+      const emergencyReviewedAt = new Date(emergencyResolvedAt.getTime() + 2 * HOUR);
+
+      await transaction.escalationPolicy.create({
+        data: {
+          id: emergencyPolicyId,
+          ...mainFacilityFilter,
+          code: 'M04-DEMO-NONCLINICAL',
+          name: '非临床演示应急升级策略',
+          version: 1,
+          status: 'ACTIVE',
+          effectiveAt: new Date(seedStartedAt - DAY),
+        },
+      });
+      await transaction.escalationStep.createMany({
+        data: [
+          {
+            id: emergencyStepIds.acknowledgement,
+            ...mainFacilityFilter,
+            escalationPolicyId: emergencyPolicyId,
+            stage: 'ACKNOWLEDGEMENT',
+            sequence: 1,
+            thresholdSeconds: 60,
+            reasonCode: 'ACKNOWLEDGEMENT_SLA_EXCEEDED',
+            notifyRoleCodes: ['NURSING_SUPERVISOR'],
+          },
+          {
+            id: emergencyStepIds.arrival,
+            ...mainFacilityFilter,
+            escalationPolicyId: emergencyPolicyId,
+            stage: 'ARRIVAL',
+            sequence: 1,
+            thresholdSeconds: 300,
+            reasonCode: 'ARRIVAL_SLA_EXCEEDED',
+            notifyRoleCodes: ['NURSING_SUPERVISOR', 'FACILITY_DIRECTOR'],
+          },
+          {
+            id: emergencyStepIds.resolution,
+            ...mainFacilityFilter,
+            escalationPolicyId: emergencyPolicyId,
+            stage: 'RESOLUTION',
+            sequence: 1,
+            thresholdSeconds: 900,
+            reasonCode: 'RESOLUTION_SLA_EXCEEDED',
+            notifyRoleCodes: ['FACILITY_DIRECTOR'],
+          },
+        ],
+      });
+      await transaction.emergencySourceBinding.create({
+        data: {
+          id: emergencySourceBindingId,
+          ...mainFacilityFilter,
+          elderId,
+          sourceKind: 'IOT_BUTTON',
+          externalSourceId: 'call-device-qinglan-001',
+          displayLabel: '1号楼201房间紧急呼叫按钮（虚构）',
+          active: true,
+        },
+      });
+      await transaction.emergencyEvent.createMany({
+        data: [
+          {
+            id: emergencyEventIds.overdueOpen,
+            ...mainFacilityFilter,
+            elderId,
+            sourceKind: 'IOT_BUTTON',
+            reasonCode: 'IOT_EMERGENCY_BUTTON',
+            status: 'OPEN',
+            version: 1,
+            escalationPolicyId: emergencyPolicyId,
+            escalationPolicyVersion: 1,
+            openedAt: emergencyOpenAt,
+            currentDeadlineAt: new Date(emergencyOpenAt.getTime() + 60_000),
+            correlationId: 'seed-m04-overdue-open',
+            createdAt: emergencyOpenAt,
+          },
+          {
+            id: emergencyEventIds.responding,
+            ...mainFacilityFilter,
+            elderId,
+            sourceKind: 'STAFF_MANUAL',
+            reasonCode: 'STAFF_REPORTED_EMERGENCY',
+            status: 'RESPONDING',
+            version: 4,
+            escalationPolicyId: emergencyPolicyId,
+            escalationPolicyVersion: 1,
+            openedAt: emergencyRespondingOpenedAt,
+            acknowledgedAt: emergencyRespondingAcknowledgedAt,
+            respondingAt: emergencyRespondingAt,
+            onSiteAt: emergencyOnSiteAt,
+            currentDeadlineAt: new Date(emergencyRespondingAt.getTime() + 900_000),
+            correlationId: 'seed-m04-responding',
+            createdAt: emergencyRespondingOpenedAt,
+          },
+          {
+            id: emergencyEventIds.reviewed,
+            ...mainFacilityFilter,
+            elderId,
+            sourceKind: 'STAFF_MANUAL',
+            reasonCode: 'STAFF_REPORTED_EMERGENCY',
+            status: 'REVIEWED',
+            version: 6,
+            escalationPolicyId: emergencyPolicyId,
+            escalationPolicyVersion: 1,
+            openedAt: emergencyReviewedOpenedAt,
+            acknowledgedAt: emergencyReviewedAcknowledgedAt,
+            respondingAt: emergencyReviewedRespondingAt,
+            onSiteAt: emergencyReviewedOnSiteAt,
+            resolvedAt: emergencyResolvedAt,
+            reviewedAt: emergencyReviewedAt,
+            currentDeadlineAt: null,
+            correlationId: 'seed-m04-reviewed',
+            createdAt: emergencyReviewedOpenedAt,
+          },
+          {
+            id: emergencyEventIds.relatedOpen,
+            ...mainFacilityFilter,
+            elderId,
+            sourceKind: 'IOT_BUTTON',
+            reasonCode: 'IOT_EMERGENCY_BUTTON',
+            status: 'OPEN',
+            version: 1,
+            escalationPolicyId: emergencyPolicyId,
+            escalationPolicyVersion: 1,
+            openedAt: emergencyRelatedAt,
+            currentDeadlineAt: new Date(emergencyRelatedAt.getTime() + 60_000),
+            correlationId: 'seed-m04-related-open',
+            createdAt: emergencyRelatedAt,
+          },
+        ],
+      });
+      await transaction.emergencySignal.createMany({
+        data: [
+          {
+            id: fixedId('b4400000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.overdueOpen,
+            sourceBindingId: emergencySourceBindingId,
+            sourceKind: 'IOT_BUTTON',
+            sourceIdentityKey: `binding:${emergencySourceBindingId}`,
+            externalEventId: 'seed-iot-emergency-0001',
+            requestFingerprint: '1'.repeat(64),
+            schemaVersion: '1.0',
+            observedAt: emergencyOpenAt,
+            receivedAt: emergencyOpenAt,
+            reasonCode: 'IOT_EMERGENCY_BUTTON',
+            correlationId: 'seed-m04-overdue-open',
+          },
+          {
+            id: fixedId('b4400000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.responding,
+            sourceUserId: ids.users.supervisor,
+            sourceKind: 'STAFF_MANUAL',
+            sourceIdentityKey: `user:${ids.users.supervisor}`,
+            externalEventId: 'seed-staff-emergency-0001',
+            requestFingerprint: '2'.repeat(64),
+            schemaVersion: '1.0',
+            observedAt: emergencyRespondingOpenedAt,
+            receivedAt: emergencyRespondingOpenedAt,
+            reasonCode: 'STAFF_REPORTED_EMERGENCY',
+            correlationId: 'seed-m04-responding',
+          },
+          {
+            id: fixedId('b4400000', 3),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.reviewed,
+            sourceUserId: ids.users.supervisor,
+            sourceKind: 'STAFF_MANUAL',
+            sourceIdentityKey: `user:${ids.users.supervisor}`,
+            externalEventId: 'seed-staff-emergency-0002',
+            requestFingerprint: '3'.repeat(64),
+            schemaVersion: '1.0',
+            observedAt: emergencyReviewedOpenedAt,
+            receivedAt: emergencyReviewedOpenedAt,
+            reasonCode: 'STAFF_REPORTED_EMERGENCY',
+            correlationId: 'seed-m04-reviewed',
+          },
+          {
+            id: fixedId('b4400000', 4),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.relatedOpen,
+            sourceBindingId: emergencySourceBindingId,
+            sourceKind: 'IOT_BUTTON',
+            sourceIdentityKey: `binding:${emergencySourceBindingId}`,
+            externalEventId: 'seed-iot-emergency-0002',
+            requestFingerprint: '4'.repeat(64),
+            schemaVersion: '1.0',
+            observedAt: emergencyRelatedAt,
+            receivedAt: emergencyRelatedAt,
+            reasonCode: 'IOT_EMERGENCY_BUTTON',
+            correlationId: 'seed-m04-related-open',
+          },
+        ],
+      });
+      await transaction.emergencyLocationSnapshot.createMany({
+        data: [
+          {
+            id: fixedId('b4500000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.overdueOpen,
+            state: 'STALE',
+            source: 'IOT_LAST_KNOWN',
+            floorId: floorIds[0],
+            roomId: roomIds[0],
+            observedAt: new Date(emergencyOpenAt.getTime() - 10 * 60 * 1000),
+            expiresAt: new Date(emergencyOpenAt.getTime() - 9 * 60 * 1000),
+            decidedAt: emergencyOpenAt,
+            retentionUntil: new Date(seedStartedAt + 24 * HOUR),
+            fallbackReasonCode: 'LOCATION_EXPIRED',
+          },
+          {
+            id: fixedId('b4500000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.responding,
+            state: 'CURRENT',
+            source: 'FACILITY_BEACON',
+            floorId: floorIds[0],
+            roomId: roomIds[0],
+            normalizedX: 0.42,
+            normalizedY: 0.58,
+            accuracyMeters: 6.5,
+            observedAt: emergencyOnSiteAt,
+            expiresAt: new Date(seedStartedAt + 5 * 60 * 1000),
+            decidedAt: emergencyOnSiteAt,
+            retentionUntil: new Date(seedStartedAt + 24 * HOUR),
+          },
+          {
+            id: fixedId('b4500000', 3),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.reviewed,
+            state: 'ROOM_FALLBACK',
+            source: 'ELDER_STAY',
+            floorId: floorIds[0],
+            roomId: roomIds[0],
+            decidedAt: emergencyReviewedOpenedAt,
+            retentionUntil: new Date(seedStartedAt + 24 * HOUR),
+            fallbackReasonCode: 'NO_FRESH_LOCATION',
+          },
+          {
+            id: fixedId('b4500000', 4),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.relatedOpen,
+            state: 'UNKNOWN',
+            source: 'UNKNOWN',
+            decidedAt: emergencyRelatedAt,
+            retentionUntil: new Date(seedStartedAt + 24 * HOUR),
+            fallbackReasonCode: 'NO_LOCATION_AVAILABLE',
+          },
+        ],
+      });
+      await transaction.emergencyTransition.createMany({
+        data: [
+          { id: fixedId('b4600000', 1), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.overdueOpen, fromStatus: null, toStatus: 'OPEN', fromVersion: 0, toVersion: 1, actorType: 'DEVICE', actorExternalId: 'call-device-qinglan-001', reasonCode: 'IOT_EMERGENCY_BUTTON', correlationId: 'seed-m04-overdue-open', occurredAt: emergencyOpenAt },
+          { id: fixedId('b4600000', 2), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.responding, fromStatus: null, toStatus: 'OPEN', fromVersion: 0, toVersion: 1, actorType: 'USER', actorUserId: ids.users.supervisor, reasonCode: 'STAFF_REPORTED_EMERGENCY', correlationId: 'seed-m04-responding', occurredAt: emergencyRespondingOpenedAt },
+          { id: fixedId('b4600000', 3), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.responding, fromStatus: 'OPEN', toStatus: 'ACKNOWLEDGED', fromVersion: 1, toVersion: 2, actorType: 'USER', actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_ACKNOWLEDGED', correlationId: 'seed-m04-responding', occurredAt: emergencyRespondingAcknowledgedAt },
+          { id: fixedId('b4600000', 4), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.responding, fromStatus: 'ACKNOWLEDGED', toStatus: 'RESPONDING', fromVersion: 2, toVersion: 3, actorType: 'USER', actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_EN_ROUTE', correlationId: 'seed-m04-responding', occurredAt: emergencyRespondingAt },
+          { id: fixedId('b4600000', 5), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, fromStatus: null, toStatus: 'OPEN', fromVersion: 0, toVersion: 1, actorType: 'USER', actorUserId: ids.users.supervisor, reasonCode: 'STAFF_REPORTED_EMERGENCY', correlationId: 'seed-m04-reviewed', occurredAt: emergencyReviewedOpenedAt },
+          { id: fixedId('b4600000', 6), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, fromStatus: 'OPEN', toStatus: 'ACKNOWLEDGED', fromVersion: 1, toVersion: 2, actorType: 'USER', actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_ACKNOWLEDGED', correlationId: 'seed-m04-reviewed', occurredAt: emergencyReviewedAcknowledgedAt },
+          { id: fixedId('b4600000', 7), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, fromStatus: 'ACKNOWLEDGED', toStatus: 'RESPONDING', fromVersion: 2, toVersion: 3, actorType: 'USER', actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_EN_ROUTE', correlationId: 'seed-m04-reviewed', occurredAt: emergencyReviewedRespondingAt },
+          { id: fixedId('b4600000', 8), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, fromStatus: 'RESPONDING', toStatus: 'RESOLVED', fromVersion: 4, toVersion: 5, actorType: 'USER', actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_RESOLVED', correlationId: 'seed-m04-reviewed', occurredAt: emergencyResolvedAt },
+          { id: fixedId('b4600000', 9), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, fromStatus: 'RESOLVED', toStatus: 'REVIEWED', fromVersion: 5, toVersion: 6, actorType: 'USER', actorUserId: ids.users.supervisor, reasonCode: 'SUPERVISOR_REVIEW_COMPLETED', correlationId: 'seed-m04-reviewed', occurredAt: emergencyReviewedAt },
+          { id: fixedId('b4600000', 10), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.relatedOpen, fromStatus: null, toStatus: 'OPEN', fromVersion: 0, toVersion: 1, actorType: 'DEVICE', actorExternalId: 'call-device-qinglan-001', reasonCode: 'IOT_EMERGENCY_BUTTON', correlationId: 'seed-m04-related-open', occurredAt: emergencyRelatedAt },
+        ],
+      });
+      await transaction.emergencyRelatedEvent.create({
+        data: {
+          id: fixedId('b4700000', 1),
+          ...mainFacilityFilter,
+          primaryEventId: emergencyEventIds.overdueOpen,
+          relatedEventId: emergencyEventIds.relatedOpen,
+          reasonCode: 'NEAR_DUPLICATE_WINDOW',
+          correlationId: 'seed-m04-related-open',
+        },
+      });
+      await transaction.emergencyResponder.createMany({
+        data: [
+          {
+            id: fixedId('b4900000', 1),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.responding,
+            staffProfileId: caregiverStaffIds[0] ?? '',
+            shiftAssignmentId: fixedId('96000000', 1),
+            teamId: teamIds[0],
+            status: 'ACKNOWLEDGED',
+            assignedByUserId: ids.users.supervisor,
+            assignedAt: new Date(emergencyRespondingOpenedAt.getTime() + 15_000),
+            acknowledgedAt: emergencyRespondingAcknowledgedAt,
+            reasonCode: 'CURRENT_SHIFT_RESPONDER',
+          },
+          {
+            id: fixedId('b4900000', 2),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.reviewed,
+            staffProfileId: caregiverStaffIds[0] ?? '',
+            shiftAssignmentId: fixedId('96000000', 1),
+            teamId: teamIds[0],
+            status: 'RELEASED',
+            assignedByUserId: ids.users.supervisor,
+            assignedAt: new Date(emergencyReviewedOpenedAt.getTime() + 15_000),
+            acknowledgedAt: emergencyReviewedAcknowledgedAt,
+            releasedAt: emergencyResolvedAt,
+            reasonCode: 'CURRENT_SHIFT_RESPONDER',
+          },
+        ],
+      });
+      await transaction.emergencyAcknowledgement.createMany({
+        data: [
+          {
+            id: fixedId('b4800000', 1),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.responding,
+            staffProfileId: caregiverStaffIds[0] ?? '',
+            shiftAssignmentId: fixedId('96000000', 1),
+            actorUserId: ids.users.caregiver,
+            acknowledgedAt: emergencyRespondingAcknowledgedAt,
+            correlationId: 'seed-m04-responding',
+          },
+          {
+            id: fixedId('b4800000', 2),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.reviewed,
+            staffProfileId: caregiverStaffIds[0] ?? '',
+            shiftAssignmentId: fixedId('96000000', 1),
+            actorUserId: ids.users.caregiver,
+            acknowledgedAt: emergencyReviewedAcknowledgedAt,
+            correlationId: 'seed-m04-reviewed',
+          },
+        ],
+      });
+      await transaction.emergencyResponseMilestone.createMany({
+        data: [
+          { id: fixedId('b4a00000', 1), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.responding, kind: 'EN_ROUTE', staffProfileId: caregiverStaffIds[0] ?? '', actorUserId: ids.users.caregiver, fromVersion: 2, toVersion: 3, occurredAt: emergencyRespondingAt, reasonCode: 'CAREGIVER_EN_ROUTE', correlationId: 'seed-m04-responding' },
+          { id: fixedId('b4a00000', 2), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.responding, kind: 'ON_SITE', staffProfileId: caregiverStaffIds[0] ?? '', actorUserId: ids.users.caregiver, fromVersion: 3, toVersion: 4, occurredAt: emergencyOnSiteAt, reasonCode: 'CAREGIVER_ON_SITE', correlationId: 'seed-m04-responding' },
+          { id: fixedId('b4a00000', 3), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, kind: 'EN_ROUTE', staffProfileId: caregiverStaffIds[0] ?? '', actorUserId: ids.users.caregiver, fromVersion: 2, toVersion: 3, occurredAt: emergencyReviewedRespondingAt, reasonCode: 'CAREGIVER_EN_ROUTE', correlationId: 'seed-m04-reviewed' },
+          { id: fixedId('b4a00000', 4), ...mainFacilityFilter, emergencyEventId: emergencyEventIds.reviewed, kind: 'ON_SITE', staffProfileId: caregiverStaffIds[0] ?? '', actorUserId: ids.users.caregiver, fromVersion: 3, toVersion: 4, occurredAt: emergencyReviewedOnSiteAt, reasonCode: 'CAREGIVER_ON_SITE', correlationId: 'seed-m04-reviewed' },
+        ],
+      });
+      await transaction.emergencyEscalation.createMany({
+        data: [
+          {
+            id: fixedId('b4b00000', 1),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.overdueOpen,
+            escalationStepId: emergencyStepIds.acknowledgement,
+            stage: 'ACKNOWLEDGEMENT',
+            status: 'TRIGGERED',
+            dueAt: new Date(emergencyOpenAt.getTime() + 60_000),
+            basisTransitionVersion: 1,
+            idempotencyKey: 'seed-m04-overdue-open:ack:1',
+            triggeredAt: new Date(emergencyOpenAt.getTime() + 60_000),
+            correlationId: 'seed-m04-overdue-open',
+          },
+          {
+            id: fixedId('b4b00000', 2),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.relatedOpen,
+            escalationStepId: emergencyStepIds.acknowledgement,
+            stage: 'ACKNOWLEDGEMENT',
+            status: 'SCHEDULED',
+            dueAt: new Date(emergencyRelatedAt.getTime() + 60_000),
+            basisTransitionVersion: 1,
+            idempotencyKey: 'seed-m04-related-open:ack:1',
+            correlationId: 'seed-m04-related-open',
+          },
+          {
+            id: fixedId('b4b00000', 3),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.responding,
+            escalationStepId: emergencyStepIds.acknowledgement,
+            stage: 'ACKNOWLEDGEMENT',
+            status: 'CANCELLED',
+            dueAt: new Date(emergencyRespondingOpenedAt.getTime() + 60_000),
+            basisTransitionVersion: 1,
+            idempotencyKey: 'seed-m04-responding:ack:1',
+            cancelledAt: emergencyRespondingAcknowledgedAt,
+            correlationId: 'seed-m04-responding',
+          },
+          {
+            id: fixedId('b4b00000', 4),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.responding,
+            escalationStepId: emergencyStepIds.arrival,
+            stage: 'ARRIVAL',
+            status: 'CANCELLED',
+            dueAt: new Date(emergencyRespondingAcknowledgedAt.getTime() + 300_000),
+            basisTransitionVersion: 2,
+            idempotencyKey: 'seed-m04-responding:arrival:2',
+            cancelledAt: emergencyOnSiteAt,
+            correlationId: 'seed-m04-responding',
+          },
+          {
+            id: fixedId('b4b00000', 5),
+            ...mainFacilityFilter,
+            emergencyEventId: emergencyEventIds.responding,
+            escalationStepId: emergencyStepIds.resolution,
+            stage: 'RESOLUTION',
+            status: 'SCHEDULED',
+            dueAt: new Date(emergencyRespondingAt.getTime() + 900_000),
+            basisTransitionVersion: 4,
+            idempotencyKey: 'seed-m04-responding:resolution:4',
+            correlationId: 'seed-m04-responding',
+          },
+        ],
+      });
+      const emergencyResolutionChecklist = {
+        schemaVersion: 1,
+        expectedCodes: [
+          'SCENE_SAFETY_CONFIRMED',
+          'ELDER_STATE_CONFIRMED',
+          'FOLLOW_UP_HANDOFF_CONFIRMED',
+        ],
+        confirmations: [
+          { code: 'SCENE_SAFETY_CONFIRMED', confirmed: true, confirmedAt: emergencyResolvedAt.toISOString() },
+          { code: 'ELDER_STATE_CONFIRMED', confirmed: true, confirmedAt: emergencyResolvedAt.toISOString() },
+          { code: 'FOLLOW_UP_HANDOFF_CONFIRMED', confirmed: true, confirmedAt: emergencyResolvedAt.toISOString() },
+        ],
+      };
+      await transaction.emergencyResolution.create({
+        data: {
+          id: fixedId('b4c00000', 1),
+          ...mainFacilityFilter,
+          emergencyEventId: emergencyEventIds.reviewed,
+          resolvedByUserId: ids.users.caregiver,
+          staffProfileId: caregiverStaffIds[0] ?? '',
+          summary: '现场环境已确认安全，老人状态稳定，并已交接后续观察。',
+          outcomeCode: 'SAFE_WITH_FOLLOW_UP',
+          familyNotify: true,
+          completionChecklist: emergencyResolutionChecklist,
+          resolvedAt: emergencyResolvedAt,
+          correlationId: 'seed-m04-reviewed',
+        },
+      });
+      await transaction.emergencyReview.create({
+        data: {
+          id: fixedId('b4d00000', 1),
+          ...mainFacilityFilter,
+          emergencyEventId: emergencyEventIds.reviewed,
+          reviewedByUserId: ids.users.supervisor,
+          kind: 'COMPLETED',
+          summary: '复盘确认人工响应、现场处置和后续交接记录完整。',
+          reviewedAt: emergencyReviewedAt,
+          correlationId: 'seed-m04-reviewed',
+        },
+      });
+      await transaction.familyEmergencyNotificationPreference.create({
+        data: {
+          id: fixedId('b4e00000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          familyRelationshipId: fixedId('8a000000', 1),
+          enabled: true,
+          notifyOnOpened: false,
+          notifyOnResolved: true,
+          channel: 'IN_APP',
+          updatedByUserId: ids.users.family,
+          version: 1,
+        },
+      });
+      await transaction.emergencyFamilySummary.createMany({
+        data: [
+          {
+            id: fixedId('b4f00000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.reviewed,
+            stage: 'RESOLVED',
+            title: '现场处置已完成',
+            summary: '机构工作人员已完成现场安全处置，并安排后续观察。',
+            publishedAt: emergencyResolvedAt,
+            correlationId: 'seed-m04-reviewed',
+          },
+          {
+            id: fixedId('b4f00000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            emergencyEventId: emergencyEventIds.reviewed,
+            stage: 'REVIEWED',
+            title: '事件复盘已完成',
+            summary: '机构已完成本次事件复盘，后续照护安排保持有效。',
+            publishedAt: emergencyReviewedAt,
+            correlationId: 'seed-m04-reviewed',
+          },
+        ],
+      });
+      await transaction.emergencyNotificationDelivery.create({
+        data: {
+          id: fixedId('b5000000', 1),
+          ...mainFacilityFilter,
+          emergencyEventId: emergencyEventIds.reviewed,
+          familyRelationshipId: fixedId('8a000000', 1),
+          stage: 'RESOLVED',
+          channel: 'IN_APP',
+          status: 'DELIVERED',
+          providerKey: 'seed-m04-reviewed:family-1:resolved:in-app',
+          attempts: 1,
+          deliveredAt: new Date(emergencyResolvedAt.getTime() + 5_000),
+          correlationId: 'seed-m04-reviewed',
+        },
+      });
+      await transaction.elderTimelineEntry.createMany({
+        data: [
+          {
+            id: fixedId('b5100000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            eventType: 'EMERGENCY_RESPONDING',
+            sourceResourceType: 'EMERGENCY_EVENT',
+            sourceResourceId: emergencyEventIds.responding,
+            visibility: 'ELDER_VISIBLE',
+            safeSummaryCode: 'HUMAN_RESPONSE_IN_PROGRESS',
+            safeMetadata: { status: 'RESPONDING' },
+            actorUserId: ids.users.caregiver,
+            correlationId: 'seed-m04-responding',
+            occurredAt: emergencyRespondingAt,
+          },
+          {
+            id: fixedId('b5100000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            eventType: 'EMERGENCY_REVIEWED',
+            sourceResourceType: 'EMERGENCY_EVENT',
+            sourceResourceId: emergencyEventIds.reviewed,
+            visibility: 'FAMILY_ELIGIBLE',
+            safeSummaryCode: 'EMERGENCY_REVIEW_COMPLETED',
+            safeMetadata: { stage: 'REVIEWED' },
+            actorUserId: ids.users.supervisor,
+            correlationId: 'seed-m04-reviewed',
+            occurredAt: emergencyReviewedAt,
+          },
+        ],
+      });
+
       await transaction.auditEvent.createMany({
         data: [
           {
@@ -1514,6 +2153,23 @@ async function seed(): Promise<void> {
             correlationId: 'seed-m03-needs-workorders',
             safeMetadata: { fictionalDemoData: true, schemaVersion: '1.3', milestone: 'M03', counts: M03_AUDIT_SAFE_COUNTS },
           },
+          {
+            id: ids.auditM04,
+            organizationId: ids.organizations.qinglan,
+            facilityId: ids.facilities.qinglanMain,
+            actorType: 'SYSTEM',
+            action: 'SYSTEM.M04_SEED_APPLIED',
+            outcome: 'SUCCESS',
+            resourceType: 'milestone',
+            resourceId: 'M04',
+            correlationId: 'seed-m04-emergency',
+            safeMetadata: {
+              fictionalDemoData: true,
+              schemaVersion: '1.4',
+              milestone: 'M04',
+              counts: M04_SEED_EXPECTATIONS,
+            },
+          },
         ],
         skipDuplicates: true,
       });
@@ -1522,10 +2178,10 @@ async function seed(): Promise<void> {
         where: { key: 'foundation.seed' },
         create: {
           key: 'foundation.seed',
-          value: { schemaVersion: '1.3', milestone: 'M03', containsBusinessFixtures: true, fictionalDemoData: true },
+          value: { schemaVersion: '1.4', milestone: 'M04', containsBusinessFixtures: true, fictionalDemoData: true },
         },
         update: {
-          value: { schemaVersion: '1.3', milestone: 'M03', containsBusinessFixtures: true, fictionalDemoData: true },
+          value: { schemaVersion: '1.4', milestone: 'M04', containsBusinessFixtures: true, fictionalDemoData: true },
         },
       });
     }, { maxWait: 10_000, timeout: 120_000 });

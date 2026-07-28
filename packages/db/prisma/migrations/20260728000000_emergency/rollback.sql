@@ -1,0 +1,48 @@
+DROP TRIGGER IF EXISTS "emergency_command_receipts_append_only" ON "emergency_command_receipts";
+DROP TRIGGER IF EXISTS "emergency_responder_assignments_append_only" ON "emergency_responder_assignments";
+DROP TRIGGER IF EXISTS "emergency_family_summaries_append_only" ON "emergency_family_summaries";
+DROP TRIGGER IF EXISTS "emergency_reviews_append_only" ON "emergency_reviews";
+DROP TRIGGER IF EXISTS "emergency_resolutions_append_only" ON "emergency_resolutions";
+DROP TRIGGER IF EXISTS "emergency_response_milestones_append_only" ON "emergency_response_milestones";
+DROP TRIGGER IF EXISTS "emergency_acknowledgements_append_only" ON "emergency_acknowledgements";
+DROP TRIGGER IF EXISTS "emergency_related_events_append_only" ON "emergency_related_events";
+DROP TRIGGER IF EXISTS "emergency_transitions_append_only" ON "emergency_transitions";
+DROP TRIGGER IF EXISTS "emergency_signals_append_only" ON "emergency_signals";
+DROP TRIGGER IF EXISTS "emergency_events_validate_transition" ON "emergency_events";
+DROP FUNCTION IF EXISTS "eldercare_reject_emergency_audit_mutation"();
+DROP FUNCTION IF EXISTS "eldercare_validate_emergency_status_transition"();
+
+DROP TABLE IF EXISTS "emergency_command_receipts";
+DROP TABLE IF EXISTS "emergency_notification_deliveries";
+DROP TABLE IF EXISTS "emergency_family_summaries";
+DROP TABLE IF EXISTS "family_emergency_notification_preferences";
+DROP TABLE IF EXISTS "emergency_reviews";
+DROP TABLE IF EXISTS "emergency_resolutions";
+DROP TABLE IF EXISTS "emergency_escalations";
+DROP TABLE IF EXISTS "escalation_steps";
+DROP TABLE IF EXISTS "emergency_response_milestones";
+DROP TABLE IF EXISTS "emergency_responder_assignments";
+DROP TABLE IF EXISTS "emergency_responders";
+DROP TABLE IF EXISTS "emergency_acknowledgements";
+DROP TABLE IF EXISTS "emergency_related_events";
+DROP TABLE IF EXISTS "emergency_transitions";
+DROP TABLE IF EXISTS "emergency_location_snapshots";
+DROP TABLE IF EXISTS "emergency_signals";
+DROP TABLE IF EXISTS "emergency_events";
+DROP TABLE IF EXISTS "escalation_policies";
+DROP TABLE IF EXISTS "emergency_source_bindings";
+
+DROP INDEX IF EXISTS "family_relationships_id_organization_id_facility_id_key";
+
+DROP TYPE IF EXISTS "EmergencyDeliveryStatus";
+DROP TYPE IF EXISTS "EmergencyNotificationChannel";
+DROP TYPE IF EXISTS "EmergencyFamilyStage";
+DROP TYPE IF EXISTS "EmergencyReviewKind";
+DROP TYPE IF EXISTS "EscalationPolicyStatus";
+DROP TYPE IF EXISTS "EmergencyEscalationStatus";
+DROP TYPE IF EXISTS "EmergencySlaStage";
+DROP TYPE IF EXISTS "EmergencyMilestoneKind";
+DROP TYPE IF EXISTS "EmergencyResponderStatus";
+DROP TYPE IF EXISTS "EmergencyLocationState";
+DROP TYPE IF EXISTS "EmergencySourceKind";
+DROP TYPE IF EXISTS "EmergencyStatus";

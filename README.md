@@ -1,6 +1,6 @@
 # Eldercare OS
 
-Production-minded eldercare operations MVP, built milestone by milestone. Through M03 the repository provides a runnable monorepo, local infrastructure, tenant-aware identity and care data, consent-aware elder/family projections, deterministic voice-request analysis, auditable needs and work orders, caregiver response, family-safe summaries, elder review, and protected role-derived portals. Emergency handling, live location, reporting, content, activities, commerce, and agent orchestration remain in their later milestones.
+Production-minded eldercare operations MVP, built milestone by milestone. Through M04 the repository provides a runnable monorepo, local infrastructure, tenant-aware identity and care data, consent-aware elder/family projections, deterministic voice-request analysis, auditable needs and work orders, caregiver response, family-safe summaries, elder review, and a complete emergency-response workflow. Emergency signals can enter through an elder action, staff workflow, or versioned MQTT fixture; deterministic policy then drives assignment, acknowledgement, en-route/on-site milestones, SLA escalation, resolution, supervisor review, privacy-filtered family updates, location-freshness handling, retention, and audit. Device-heartbeat/offline operations, facility-wide live mapping, reporting, content, activities, commerce, and agent orchestration remain in later milestones.
 
 ## Prerequisites
 
@@ -66,10 +66,10 @@ Demo seeding is denied unless `NODE_ENV` is `development` or `test` **and** `ELD
 
 All visible people, counts, rooms, queues and service events are fictional fixtures. Mobile portal selection comes only from the server-authorized session; there is no client-side role switch.
 
-Primary routes through M03:
+Primary routes through M04:
 
-- Admin: `/login`, `/`, `/users`, `/roles`, `/elders`, `/facility/rooms`, `/staff`, `/shifts`, `/needs`, `/work-orders`, `/work-orders/[id]`, `/forbidden`
-- Mobile: `/login`, `/m/elder/home`, `/m/elder/voice-request`, `/m/elder/services`, `/m/caregiver/home`, `/m/caregiver/tasks/[id]`, `/m/family/home`, `/offline`
+- Admin: `/login`, `/`, `/users`, `/roles`, `/elders`, `/facility/rooms`, `/staff`, `/shifts`, `/needs`, `/work-orders`, `/work-orders/[id]`, `/emergencies`, `/emergencies/[id]`, `/forbidden`
+- Mobile: `/login`, `/m/elder/home`, `/m/elder/voice-request`, `/m/elder/services`, `/m/elder/emergency/[id]`, `/m/caregiver/home`, `/m/caregiver/tasks/[id]`, `/m/caregiver/emergencies/[id]`, `/m/family/home`, `/offline`
 - API: `/docs`, `/openapi.json`, `/health/live`, `/health/ready`
 
 The Compose stack is for local development only. Its published ports bind to `127.0.0.1`, and the committed development credentials must never be reused outside this machine.
@@ -97,28 +97,31 @@ pnpm security:scan
 pnpm test:e2e:offline
 pnpm --filter @eldercare/iot-simulator dry-run
 pnpm --filter @eldercare/iot-simulator check
+pnpm --filter @eldercare/iot-simulator emergency
 pnpm smoke:services
 ```
 
 `test:integration` and `smoke:services` expect local infrastructure to be running; the service smoke also expects a completed build. `test:e2e` starts the API plus both Next.js apps and exercises real cookie sessions at the required desktop/mobile viewports. `test:e2e:offline` expects a production build and verifies that protected portal data is never restored from the service-worker cache.
 
+`pnpm --filter @eldercare/iot-simulator emergency` publishes one deterministic fictional M04 emergency signal over the versioned MQTT topic. The worker uses a persistent QoS 1 subscriber and commits the event before acknowledging delivery. The simulator does not implement M05 heartbeat-loss or device-maintenance behavior.
+
 ## Workspace
 
 ```text
 apps/
-  admin-web/       protected institution console, directories, need review and work orders
+  admin-web/       protected institution console, care queues, work orders and emergency command
   mobile-web/      session-derived elder, caregiver and family workflow PWA
-  api/             NestJS tenant/auth, elder, voice, need and work-order APIs plus SSE
-  worker/          health endpoints and bounded voice-retention cleanup
-  iot-simulator/   MQTT connection-only skeleton
+  api/             NestJS tenant/auth, care, work-order and emergency APIs plus SSE
+  worker/          health, retention, emergency MQTT, SLA and family-notification jobs
+  iot-simulator/   MQTT readiness plus deterministic M04 emergency publishing
 packages/
-  db/              Prisma M00–M03 identity, elder, consent, voice, need and work-order schema
-  contracts/       health, auth, elder, voice, work-order, event and MQTT schemas
+  db/              Prisma M00–M04 identity, care, consent, work-order and emergency schema
+  contracts/       health, auth, care, work-order, emergency, event and MQTT schemas
   ui/              shared design tokens and state primitives
-  authz/            permissions, roles, data-scope and work-order resource policies
+  authz/            permissions, roles, data-scope, work-order and emergency policies
   ai/               provider-neutral contracts plus deterministic fake analysis
   agents/           restricted-tool contracts only
-  events/           event envelopes and deterministic M03 event/idempotency helpers
+  events/           event envelopes and deterministic M03/M04 idempotency helpers
   content/          source-provider contracts only
   commerce/         payment-provider contracts only
   config/           typed environment configuration
@@ -133,7 +136,9 @@ packages/
 
 ## Database lifecycle
 
-M00 creates `_system_metadata`; M01 adds tenant identity, sessions, permissions and audit; M02 adds facility, elder, consent, relationship and staffing foundations; M03 adds voice submissions, transcripts/analysis metadata, needs, work orders, assignments, transitions, arrivals, completion records, family summaries and ratings. Emergency, device, content, activity and commerce tables remain deferred to their own milestones.
+M00 creates `_system_metadata`; M01 adds tenant identity, sessions, permissions and audit; M02 adds facility, elder, consent, relationship and staffing foundations; M03 adds voice submissions, transcripts/analysis metadata, needs, work orders, assignments, transitions, arrivals, completion records, family summaries and ratings. M04 adds emergency source bindings, events, immutable responder assignments, acknowledgements, response milestones, resolutions, reviews, related-signal links, location snapshots, escalation policies/executions/cancellations, command receipts, family notification preferences/deliveries, and retention foundations. Device heartbeat, offline alerts, maintenance, content, activity and commerce tables remain deferred to their own milestones.
+
+Emergency SLA thresholds are versioned facility records in `EscalationPolicy`/`EscalationStep`, not process-wide environment switches. The committed demo seed creates a non-clinical 60/300/900-second policy solely for local verification.
 
 To reset the local development database:
 

@@ -17,6 +17,10 @@ import {
   ElderServicesPanel,
   FamilySummariesPanel
 } from './m03-workflows';
+import {
+  CaregiverEmergenciesPanel,
+  FamilyEmergencyPanel
+} from './m04-workflows';
 import { CaregiverElderContext, FamilyElderContext } from './scoped-elder-context';
 import type { Role } from './types';
 
@@ -83,11 +87,15 @@ export function ElderHome({
       </button>
 
       <div className="critical-actions" aria-label="紧急和人工操作">
-        <button className="critical-action emergency-action" disabled type="button">
+        <button
+          className="critical-action emergency-action"
+          onClick={() => onNavigate('emergency')}
+          type="button"
+        >
           <AlertOutlined aria-hidden="true" />
           <span>
             <strong>紧急求助</strong>
-            <small>M04 接入前不会假装发送</small>
+            <small>点击即发送，并显示服务器确认</small>
           </span>
         </button>
         <button
@@ -155,6 +163,12 @@ export function CaregiverHome({ onNavigate }: Readonly<{ onNavigate: Navigate }>
         </div>
       </section>
 
+      <CaregiverEmergenciesPanel
+        compact
+        onOpenAll={() => onNavigate('emergencies')}
+        onSelect={(emergencyId) => onNavigate('emergencies', emergencyId)}
+      />
+
       <CaregiverTasksPanel
         compact
         onOpenAll={() => onNavigate('tasks')}
@@ -180,6 +194,8 @@ export function FamilyHome() {
       </section>
 
       <FamilyElderContext />
+
+      <FamilyEmergencyPanel />
 
       <section className="privacy-notice" aria-label="家属隐私说明">
         <LockOutlined aria-hidden="true" />

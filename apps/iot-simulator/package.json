@@ -9,6 +9,7 @@
     "start": "node dist/main.js",
     "check": "tsx --conditions=development src/main.ts --check",
     "dry-run": "tsx --conditions=development src/main.ts --dry-run",
+    "emergency": "tsx --conditions=development src/main.ts --emergency",
     "lint": "eslint src test vitest.config.ts vitest.integration.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config vitest.config.ts",

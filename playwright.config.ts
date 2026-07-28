@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,
-  workers: process.env.CI ? 2 : 4,
+  workers: 2,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
@@ -42,22 +42,22 @@ export default defineConfig({
     {
       name: 'admin-1440',
       use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:3300', viewport: { width: 1440, height: 900 } },
-      testMatch: /admin-shell\.spec\.ts/
+      testMatch: /admin-(shell|emergency)\.spec\.ts/
     },
     {
       name: 'admin-1280',
       use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:3300', viewport: { width: 1280, height: 900 } },
-      testMatch: /admin-shell\.spec\.ts/
+      testMatch: /admin-(shell|emergency)\.spec\.ts/
     },
     {
       name: 'mobile-375',
       use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:3001', viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true },
-      testMatch: /mobile-shell\.spec\.ts/
+      testMatch: /mobile-(shell|emergency)\.spec\.ts/
     },
     {
       name: 'mobile-360',
       use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:3001', viewport: { width: 360, height: 800 }, isMobile: true, hasTouch: true },
-      testMatch: /mobile-shell\.spec\.ts/
+      testMatch: /mobile-(shell|emergency)\.spec\.ts/
     }
   ]
 });

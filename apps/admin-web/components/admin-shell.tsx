@@ -66,13 +66,13 @@ const AdminShellSearchContext = createContext<AdminShellSearchValue | null>(null
 const navigationItems: NavigationItem[] = [
   { key: 'home', label: '工作台', icon: <HomeOutlined />, path: '/' },
   {
-    key: 'risk',
-    label: '风险待办',
+    key: 'emergencies',
+    label: '紧急事件',
     icon: <AlertOutlined />,
-    path: '/',
-    badge: 4,
+    path: '/emergencies',
     markCurrent: true
   },
+  { key: 'risk', label: '风险待办', icon: <SafetyCertificateOutlined />, path: '/' },
   { key: 'orders', label: '工单管理', icon: <ProfileOutlined />, path: '/work-orders', markCurrent: true },
   { key: 'elders', label: '老人档案', icon: <ApartmentOutlined />, path: '/elders', markCurrent: true },
   { key: 'rooms', label: '房间床位', icon: <HomeOutlined />, path: '/facility/rooms', markCurrent: true },
