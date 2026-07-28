@@ -5,7 +5,7 @@
 | M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
 | M01 Auth/RBAC | COMPLETE | feat/m01-auth-rbac | passed | 2026-07-13; local milestone accepted, GitHub publish pending remote/CLI setup |
 | M02 Elder management | COMPLETE | feat/m02-elder-management | passed | 2026-07-21; all acceptance gates passed; [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) merged |
-| M03 Needs/work orders | READY_FOR_REVIEW | feat/m03-needs-workorders | passed | full acceptance and security gates passed; draft PR pending |
+| M03 Needs/work orders | IN_REVIEW | feat/m03-needs-workorders | passed | [GitHub PR #2](https://github.com/senizuaki-bit/eldercare-os/pull/2) opened as draft; P0=0, P1=0 |
 | M04 Emergency | NOT_STARTED | feat/m04-emergency | pending | |
 | M05 IoT/offline | NOT_STARTED | feat/m05-iot-offline | pending | |
 | M06 Indoor map | NOT_STARTED | feat/m06-indoor-map | pending | |
@@ -114,7 +114,7 @@ For each completed milestone record:
 
 ## M03 acceptance record
 
-- Commit/PR: branch `feat/m03-needs-workorders`; milestone commit subject `feat(m03): add auditable needs and work-order workflow`; draft PR URL will be added immediately after GitHub creates it.
+- Commit/PR: branch `feat/m03-needs-workorders`; milestone commit `d504eb9` (`feat(m03): add auditable needs and work-order workflow`); [GitHub PR #2](https://github.com/senizuaki-bit/eldercare-os/pull/2) is open as a draft against `main`.
 - Migrations and rollback: `20260721000000_needs_workorders` adds voice submissions, transcripts, schema-validated AI analyses, linked needs, work orders, assignments, transitions, immutable arrivals, completion records, family summaries and ratings; reviewed `rollback.sql` is included. Migrate, repeated migrate, repeated seed, clean reset/replay and storage lifecycle initialization passed.
 - APIs/events/state machines: elder upload-intent/finalize, deterministic demo, cancellation and human-help; administrator need queue/manual fallback/review and work-order list/detail/assignment/verification/closure; active-shift caregiver list/detail/accept/arrive/start/complete; elder verification/rating; consent-filtered family summaries; restricted transcript/audio URL access; authorization-scoped SSE task updates. The state machine is `NEW -> ASSIGNED -> ACCEPTED -> IN_PROGRESS -> COMPLETED -> VERIFIED -> CLOSED`, with controlled cancellation. Arrival is an immutable event/timestamp and version increment, not an extra state.
 - AI and safety boundary: the deterministic fixture for “我想喝热水，今天有点头晕。” produces linked daily-living and health needs. AI output is advisory, schema-validated and correction-aware; deterministic rules set priority and require human review. Transcription/analysis failure creates an auditable manual fallback. Consent withdrawal immediately suppresses analysis projections and prevents new sensitive persistence.

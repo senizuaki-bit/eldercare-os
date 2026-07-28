@@ -54,7 +54,7 @@
 
 - M00–M02 已完成；M02 已通过 [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) 合并。
 - `feat/m03-needs-workorders` 已完成语音需求、确定性 Fake AI 与风险规则、人工复核、工单处置、家属安全摘要和老人评价闭环，并通过完整门禁。
-- M03 已具备送审条件；创建 GitHub 草稿 PR 后进入 `IN_REVIEW`。M04 及以后仍未开始。
+- M03 已通过完整门禁，并在 [GitHub PR #2](https://github.com/senizuaki-bit/eldercare-os/pull/2) 进入 `IN_REVIEW`。M04 及以后仍未开始。
 
 里程碑的实时状态、已运行证据和已知限制以 `docs/TASK_STATUS.md` 为准。
 
