@@ -42,6 +42,10 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
+    "@eldercare/db#test": {
+      "dependsOn": ["db:generate", "^build"],
+      "outputs": ["coverage/**"]
+    },
     "test:integration": {
       "dependsOn": ["build"],
       "cache": false
