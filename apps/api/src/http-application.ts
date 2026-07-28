@@ -28,7 +28,7 @@ export function createOpenApiDocument(
     new DocumentBuilder()
       .setTitle('Eldercare Operations API')
       .setDescription(
-        'M02 tenant-aware identity, facility directory, elder record, consent and staffing operations.',
+        'M03 tenant-aware elder records, private voice requests, deterministic risk review and auditable work orders.',
       )
       .setVersion(config.appVersion)
       .addCookieAuth('eldercare_session', {

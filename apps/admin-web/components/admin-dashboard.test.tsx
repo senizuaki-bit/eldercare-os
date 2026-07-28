@@ -57,7 +57,7 @@ describe('AdminDashboard', () => {
 
     const expandButton = screen.getByRole('button', { name: '展开侧栏' });
     expect(expandButton).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByRole('button', { name: '工单管理' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: '工单管理' })).toHaveAttribute('href', '/work-orders');
   });
 
   it('filters queue fixtures through global search', () => {

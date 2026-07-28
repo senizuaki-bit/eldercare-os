@@ -4,6 +4,9 @@ packages:
 
 minimumReleaseAgeExclude:
   - eslint@10.7.0
+  - '@aws-sdk/client-s3@3.1091.0'
+  - '@aws-sdk/s3-presigned-post@3.1091.0'
+  - '@aws-sdk/s3-request-presigner@3.1091.0'
 
 allowBuilds:
   '@prisma/engines': true

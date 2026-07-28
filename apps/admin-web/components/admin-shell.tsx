@@ -73,7 +73,7 @@ const navigationItems: NavigationItem[] = [
     badge: 4,
     markCurrent: true
   },
-  { key: 'orders', label: '工单管理', icon: <ProfileOutlined />, milestone: 'M03' },
+  { key: 'orders', label: '工单管理', icon: <ProfileOutlined />, path: '/work-orders', markCurrent: true },
   { key: 'elders', label: '老人档案', icon: <ApartmentOutlined />, path: '/elders', markCurrent: true },
   { key: 'rooms', label: '房间床位', icon: <HomeOutlined />, path: '/facility/rooms', markCurrent: true },
   { key: 'staff', label: '员工目录', icon: <MedicineBoxOutlined />, path: '/staff', markCurrent: true },

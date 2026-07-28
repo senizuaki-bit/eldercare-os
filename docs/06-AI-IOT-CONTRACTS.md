@@ -25,20 +25,20 @@ interface SpeechProvider {
 ```json
 {
   "summary": "老人希望喝热水，并表示轻微头晕",
-  "categories": ["daily_living", "health_concern"],
+  "categories": ["DAILY_LIVING", "HEALTH_CONCERN"],
   "urgencySuggestion": "PRIORITY",
   "reportedConcerns": ["头晕"],
-  "safetyFlags": [],
+  "safetyFlags": ["HEALTH_CONCERN_REQUIRES_HUMAN_REVIEW"],
   "emotionObservation": {
-    "label": "possible_distress",
+    "label": "POSSIBLE_DISTRESS",
     "confidence": 0.61,
     "evidence": ["表达担忧，语速较平时慢"]
   },
   "followUpQuestions": ["现在能否正常站立和行走？"],
   "requiresHumanReview": true,
   "subIntents": [
-    {"type": "NEED", "summary": "提供热水"},
-    {"type": "HEALTH_REVIEW", "summary": "确认头晕情况"}
+    {"category": "DAILY_LIVING", "summary": "提供热水", "urgencySuggestion": "ROUTINE"},
+    {"category": "HEALTH_CONCERN", "summary": "确认头晕情况", "urgencySuggestion": "PRIORITY"}
   ]
 }
 ```
@@ -48,6 +48,7 @@ interface SpeechProvider {
 - 保存 provider/model/prompt/schema/version/confidence/evidence。
 - AI 失败时允许人工创建需求，不阻塞安全流程。
 - 多意图输入拆分业务草稿，不允许一个智能体跨域直接完成所有动作。
+- M03 的确定性规则基于完整分析输出再次计算风险；即使 provider 的 `subIntents` 形状遗漏风险类别，全局风险也必须落到主 Need 并进入人工复核，不能由模型输出结构绕过。
 
 ## 3. 智能体工具契约
 

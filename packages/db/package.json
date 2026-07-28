@@ -13,13 +13,13 @@
   },
   "files": ["dist", "prisma"],
   "scripts": {
-    "build": "prisma generate --config prisma.config.ts && tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint src prisma.config.ts prisma/seed.ts --ignore-pattern generated",
-    "typecheck": "prisma generate --config prisma.config.ts && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests src",
     "db:generate": "prisma generate --config prisma.config.ts",
     "db:migrate": "prisma migrate deploy --config prisma.config.ts",
-    "db:seed": "pnpm --filter @eldercare/authz build && prisma db seed --config prisma.config.ts",
+    "db:seed": "corepack pnpm --filter @eldercare/authz build && prisma db seed --config prisma.config.ts",
     "db:reset": "prisma migrate reset --force --config prisma.config.ts"
   },
   "dependencies": {

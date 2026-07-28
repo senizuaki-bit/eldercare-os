@@ -41,7 +41,30 @@ describe('typed configuration', () => {
       authRateLimitMaxAttempts: 5,
       authRateLimitWindowSeconds: 900,
       authRateLimitKeyPrefix: 'eldercare:auth',
+      voiceUploadAuthorizationTtlSeconds: 300,
+      voiceStagingSweepMinAgeSeconds: 900,
     });
+  });
+
+  it('keeps the staging orphan sweep safely beyond the upload authorization window', () => {
+    expect(
+      parseServiceConfig({
+        ...validEnvironment,
+        VOICE_UPLOAD_AUTHORIZATION_TTL_SECONDS: '240',
+        VOICE_STAGING_SWEEP_MIN_AGE_SECONDS: '600',
+      }),
+    ).toMatchObject({
+      voiceUploadAuthorizationTtlSeconds: 240,
+      voiceStagingSweepMinAgeSeconds: 600,
+    });
+
+    expect(() =>
+      parseServiceConfig({
+        ...validEnvironment,
+        VOICE_UPLOAD_AUTHORIZATION_TTL_SECONDS: '300',
+        VOICE_STAGING_SWEEP_MIN_AGE_SECONDS: '360',
+      }),
+    ).toThrow('VOICE_STAGING_SWEEP_MIN_AGE_SECONDS');
   });
 
   it('validates session lifetime ordering and auth rate-limit settings', () => {

@@ -13,7 +13,10 @@ NEW -> ASSIGNED -> ACCEPTED -> IN_PROGRESS -> COMPLETED -> VERIFIED -> CLOSED
 
 - NEW 只有主管/规则服务可分配。
 - ACCEPTED 必须是当前被分配人员或有再分配权限者。
-- COMPLETED 需要完成说明；高风险工单需要结构化检查项。
+- `WORK_ORDER.ARRIVED` 不是工单状态。到场时追加不可变 `WorkOrderArrival` 记录与 `arrivedAt` 时间戳，状态保持 `ACCEPTED`，同时递增聚合版本；随后“开始处理”才转换为 `IN_PROGRESS`。
+- COMPLETED 需要完成说明；当工单为 `IMMEDIATE_REVIEW`，或主需求要求人工复核、属于健康/紧急类别、命中任一安全规则时，服务端判定为高风险并要求结构化完成清单。
+- 高风险清单固定为“服务对象状态已核对、服务结果已核对、后续风险已复核”三项。客户端只能逐项确认；服务端在串行化事务内拒绝缺失、部分、重复、未知或低风险多传的清单，并保存 schema version、风险原因、固定代码、确认时间和提交人员关联。
+- `ServiceCompletion.completionChecklist` 与 `checklistConfirmedAt` 形成不可漂移的审计快照；家属摘要不得包含内部清单、完成说明或风险规则明细。
 - 家属可见摘要和内部记录分离。
 - VERIFIED 由老人、主管或配置的流程完成。
 - CLOSED 后修改需创建更正记录，不能覆盖历史。

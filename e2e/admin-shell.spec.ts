@@ -80,3 +80,30 @@ test('M02 operational directories expose scoped elder, room, staff and shift con
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? ''))).toEqual([]);
 });
+
+test('M03 need and work-order queues expose the auditable care workflow', async ({ page }) => {
+  await login(page, '/needs');
+
+  await expect(page.getByRole('heading', { name: '需求复核队列', level: 1 })).toBeVisible();
+  await expect(page.getByText('AI 只提供草案')).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByText('老人语音请求').first()).toBeVisible();
+
+  await page.goto('/work-orders');
+  await expect(page.getByRole('heading', { name: '工单管理', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /院区工单/, level: 2 })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
+  await page.getByRole('link', { name: /详情/ }).first().click();
+
+  await expect(page).toHaveURL(/\/work-orders\/[0-9a-f-]+$/);
+  await expect(page.getByRole('heading', { name: 'AI 建议（非最终决定）', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '确定性风险规则', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '不可变状态时间线', level: 2 })).toBeVisible();
+  await expect(page.locator('audio')).toHaveCount(0);
+  await expect(page.getByText('我想喝热水，今天有点头晕。', { exact: true })).toHaveCount(0);
+
+  const viewportOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(viewportOverflow).toBeLessThanOrEqual(1);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? ''))).toEqual([]);
+});

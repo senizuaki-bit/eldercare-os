@@ -12,8 +12,14 @@ export const roleLabels: Record<Role, string> = {
 
 export const sectionsByRole: Record<Role, readonly string[]> = {
   caregiver: ['home', 'tasks', 'handover', 'profile'],
-  elder: ['home', 'schedule', 'family', 'profile'],
+  elder: ['home', 'voice-request', 'schedule', 'family', 'profile'],
   family: ['home', 'events', 'services', 'profile']
+};
+
+const detailSectionsByRole: Record<Role, readonly string[]> = {
+  caregiver: ['tasks'],
+  elder: ['voice-request'],
+  family: []
 };
 
 export function isRole(value: string): value is Role {
@@ -22,4 +28,14 @@ export function isRole(value: string): value is Role {
 
 export function isRoleSection(role: Role, value: string): boolean {
   return sectionsByRole[role].includes(value);
+}
+
+export function isRoleSectionPath(role: Role, values: readonly string[]): boolean {
+  const [section, detailId] = values;
+  if (!section || !isRoleSection(role, section)) return false;
+  if (values.length === 1) return true;
+  if (values.length !== 2 || !detailId || !detailSectionsByRole[role].includes(section)) {
+    return false;
+  }
+  return /^[A-Za-z0-9][A-Za-z0-9_-]{7,127}$/.test(detailId);
 }

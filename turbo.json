@@ -19,14 +19,31 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
+    "db:generate": {
+      "outputs": ["src/generated/prisma/**"]
+    },
     "lint": {
       "dependsOn": ["^build", "^lint"]
+    },
+    "@eldercare/db#build": {
+      "dependsOn": ["db:generate", "^build"],
+      "outputs": ["dist/**"]
+    },
+    "@eldercare/db#lint": {
+      "dependsOn": ["db:generate", "^build", "^lint"]
     },
     "typecheck": {
       "dependsOn": ["^build", "^typecheck"]
     },
+    "@eldercare/db#typecheck": {
+      "dependsOn": ["db:generate", "^build", "^typecheck"]
+    },
     "test": {
       "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "@eldercare/db#test": {
+      "dependsOn": ["db:generate", "^build"],
       "outputs": ["coverage/**"]
     },
     "test:integration": {

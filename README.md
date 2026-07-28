@@ -1,6 +1,6 @@
 # Eldercare OS
 
-Production-minded eldercare operations MVP, built milestone by milestone. Through M01 the repository provides a runnable monorepo, local infrastructure, real local-demo password sessions, tenant-aware RBAC/data scopes, audit foundations, protected admin pages, and role-derived mobile portals. Elder and care-domain records remain intentionally deferred to M02 and later milestones.
+Production-minded eldercare operations MVP, built milestone by milestone. Through M03 the repository provides a runnable monorepo, local infrastructure, tenant-aware identity and care data, consent-aware elder/family projections, deterministic voice-request analysis, auditable needs and work orders, caregiver response, family-safe summaries, elder review, and protected role-derived portals. Emergency handling, live location, reporting, content, activities, commerce, and agent orchestration remain in their later milestones.
 
 ## Prerequisites
 
@@ -23,11 +23,13 @@ If your machine does not allow Corepack to write global shims, replace `pnpm` wi
 cp .env.example .env
 pnpm install
 docker compose up -d --wait
-pnpm storage:init
+corepack pnpm storage:init
 pnpm db:migrate
 pnpm db:seed
 pnpm dev
 ```
+
+Run `corepack pnpm storage:init` on every clean local environment after Compose starts. The command idempotently creates the private MinIO bucket, disables anonymous access, and installs the one-day `voice/staging/` lifecycle safety net before the first upload.
 
 Windows PowerShell equivalent for the first command:
 
@@ -64,10 +66,10 @@ Demo seeding is denied unless `NODE_ENV` is `development` or `test` **and** `ELD
 
 All visible people, counts, rooms, queues and service events are fictional fixtures. Mobile portal selection comes only from the server-authorized session; there is no client-side role switch.
 
-Primary routes:
+Primary routes through M03:
 
-- Admin: `/login`, `/`, `/users`, `/roles`, `/forbidden`
-- Mobile: `/login`, `/m/elder/home`, `/m/caregiver/home`, `/m/family/home`, `/offline`
+- Admin: `/login`, `/`, `/users`, `/roles`, `/elders`, `/facility/rooms`, `/staff`, `/shifts`, `/needs`, `/work-orders`, `/work-orders/[id]`, `/forbidden`
+- Mobile: `/login`, `/m/elder/home`, `/m/elder/voice-request`, `/m/elder/services`, `/m/caregiver/home`, `/m/caregiver/tasks/[id]`, `/m/family/home`, `/offline`
 - API: `/docs`, `/openapi.json`, `/health/live`, `/health/ready`
 
 The Compose stack is for local development only. Its published ports bind to `127.0.0.1`, and the committed development credentials must never be reused outside this machine.
@@ -104,19 +106,19 @@ pnpm smoke:services
 
 ```text
 apps/
-  admin-web/       protected institution console and read-first access directory
-  mobile-web/      session-derived elder, caregiver and family PWA portals
-  api/             NestJS auth, scoped identity/audit APIs, health and OpenAPI
-  worker/          readiness server; business jobs begin in later milestones
+  admin-web/       protected institution console, directories, need review and work orders
+  mobile-web/      session-derived elder, caregiver and family workflow PWA
+  api/             NestJS tenant/auth, elder, voice, need and work-order APIs plus SSE
+  worker/          health endpoints and bounded voice-retention cleanup
   iot-simulator/   MQTT connection-only skeleton
 packages/
-  db/              Prisma M00 metadata plus M01 identity/session/audit schema
-  contracts/       health, error, auth, identity, audit and MQTT schemas
+  db/              Prisma M00–M03 identity, elder, consent, voice, need and work-order schema
+  contracts/       health, auth, elder, voice, work-order, event and MQTT schemas
   ui/              shared design tokens and state primitives
-  authz/            permissions, roles, data-scope and resource policies
-  ai/               provider contracts only
+  authz/            permissions, roles, data-scope and work-order resource policies
+  ai/               provider-neutral contracts plus deterministic fake analysis
   agents/           restricted-tool contracts only
-  events/           event-envelope contracts only
+  events/           event envelopes and deterministic M03 event/idempotency helpers
   content/          source-provider contracts only
   commerce/         payment-provider contracts only
   config/           typed environment configuration
@@ -131,14 +133,14 @@ packages/
 
 ## Database lifecycle
 
-M00 creates `_system_metadata`. M01 adds `Organization`, `Facility`, `User`, `PasswordCredential`, `Role`, `Permission`, `RolePermission`, `UserRole`, `DataScope`, `AuthSession`, and append-only `AuditEvent` storage. Elder, work-order, emergency, device, content, activity and commerce tables remain deferred to their own milestones.
+M00 creates `_system_metadata`; M01 adds tenant identity, sessions, permissions and audit; M02 adds facility, elder, consent, relationship and staffing foundations; M03 adds voice submissions, transcripts/analysis metadata, needs, work orders, assignments, transitions, arrivals, completion records, family summaries and ratings. Emergency, device, content, activity and commerce tables remain deferred to their own milestones.
 
 To reset the local development database:
 
 ```bash
 pnpm db:reset
 pnpm db:seed
-pnpm storage:init
+corepack pnpm storage:init
 ```
 
 Each applied milestone migration folder contains a reviewed `rollback.sql`. Do not run rollback SQL against an environment with later migrations applied.

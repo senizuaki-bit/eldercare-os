@@ -2,8 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 
 import { PrismaClient } from './generated/prisma/client.js';
 
-export { PrismaClient } from './generated/prisma/client.js';
-export type { Prisma } from './generated/prisma/client.js';
+export { Prisma, PrismaClient } from './generated/prisma/client.js';
 
 function assertDirectPostgresUrl(databaseUrl: string): void {
   let protocol: string;

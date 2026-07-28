@@ -13,6 +13,10 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1091.0",
+    "@aws-sdk/s3-presigned-post": "3.1091.0",
+    "@aws-sdk/s3-request-presigner": "3.1091.0",
+    "@eldercare/ai": "workspace:*",
     "@eldercare/authz": "workspace:*",
     "@eldercare/config": "workspace:*",
     "@eldercare/contracts": "workspace:*",

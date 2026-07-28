@@ -13,8 +13,10 @@
     "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1091.0",
     "@eldercare/config": "workspace:*",
     "@eldercare/contracts": "workspace:*",
+    "@eldercare/db": "workspace:*",
     "@eldercare/observability": "workspace:*",
     "ioredis": "5.11.1",
     "pg": "8.22.0"

@@ -92,6 +92,18 @@ const rawServiceConfigSchema = z.object({
     .min(3)
     .max(63)
     .regex(/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/),
+  VOICE_UPLOAD_AUTHORIZATION_TTL_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(60)
+    .max(900)
+    .default(300),
+  VOICE_STAGING_SWEEP_MIN_AGE_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(120)
+    .max(86_400)
+    .default(900),
   MQTT_URL: mqttUrlSchema,
   MQTT_TOPIC_PREFIX: mqttPrefixSchema,
   READINESS_TIMEOUT_MS: z.coerce.number().int().min(100).max(30_000).default(1500),
@@ -128,6 +140,16 @@ const rawServiceConfigSchema = z.object({
       message: 'must be greater than AUTH_SESSION_IDLE_TTL_SECONDS',
     });
   }
+  if (
+    value.VOICE_STAGING_SWEEP_MIN_AGE_SECONDS <=
+    value.VOICE_UPLOAD_AUTHORIZATION_TTL_SECONDS + 60
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['VOICE_STAGING_SWEEP_MIN_AGE_SECONDS'],
+      message: 'must exceed VOICE_UPLOAD_AUTHORIZATION_TTL_SECONDS by more than 60 seconds',
+    });
+  }
 });
 
 export const serviceConfigSchema = rawServiceConfigSchema.transform((value) => ({
@@ -145,6 +167,8 @@ export const serviceConfigSchema = rawServiceConfigSchema.transform((value) => (
   minioAccessKey: value.MINIO_ACCESS_KEY,
   minioSecretKey: value.MINIO_SECRET_KEY,
   minioBucket: value.MINIO_BUCKET,
+  voiceUploadAuthorizationTtlSeconds: value.VOICE_UPLOAD_AUTHORIZATION_TTL_SECONDS,
+  voiceStagingSweepMinAgeSeconds: value.VOICE_STAGING_SWEEP_MIN_AGE_SECONDS,
   mqttUrl: value.MQTT_URL,
   mqttTopicPrefix: value.MQTT_TOPIC_PREFIX,
   readinessTimeoutMs: value.READINESS_TIMEOUT_MS,

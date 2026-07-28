@@ -54,7 +54,9 @@ export type AuthorizationReasonCode =
   | 'SHIFT_INACTIVE'
   | 'CONSENT_MISSING'
   | 'CONSENT_WITHDRAWN'
-  | 'FIELD_NOT_SHARED';
+  | 'FIELD_NOT_SHARED'
+  | 'STATE_TRANSITION_INVALID'
+  | 'STATE_TERMINAL';
 
 export interface AuthorizationDecision {
   readonly allowed: boolean;

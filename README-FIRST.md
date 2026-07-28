@@ -50,6 +50,14 @@
 
 先完成并稳定 M00–M11，再开发 M12–M16。不要在一个 PR 中跨多个里程碑。
 
+### 当前实现进度
+
+- M00–M02 已完成；M02 已通过 [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) 合并。
+- `feat/m03-needs-workorders` 已完成语音需求、确定性 Fake AI 与风险规则、人工复核、工单处置、家属安全摘要和老人评价闭环，并通过完整门禁。
+- M03 已通过完整门禁，并在 [GitHub PR #2](https://github.com/senizuaki-bit/eldercare-os/pull/2) 进入 `IN_REVIEW`。M04 及以后仍未开始。
+
+里程碑的实时状态、已运行证据和已知限制以 `docs/TASK_STATUS.md` 为准。
+
 ## 3. 首版明确不做
 
 - 医疗诊断、处方、自动停药、自动急救决策
@@ -68,7 +76,7 @@
 - 语言：TypeScript
 - 管理端：Next.js + Ant Design + ECharts
 - 移动端：Next.js PWA
-- API：NestJS + REST + OpenAPI + WebSocket
+- API：NestJS + REST + OpenAPI + SSE（后续按实时场景需要引入 WebSocket）
 - 数据库：PostgreSQL + Prisma
 - 队列：Redis + BullMQ
 - 文件：S3 兼容；本地 MinIO
@@ -144,10 +152,13 @@ pnpm test:e2e
 cp .env.example .env
 pnpm install
 docker compose up -d
+corepack pnpm storage:init
 pnpm db:migrate
 pnpm db:seed
 pnpm dev
 ```
+
+`corepack pnpm storage:init` 必须在 Compose 服务启动后执行；它会幂等创建本地私有 MinIO bucket、关闭匿名访问，并为 `voice/staging/` 配置 1 天过期的生命周期兜底规则。
 
 ## 8. 核心演示链路（M00–M11）
 

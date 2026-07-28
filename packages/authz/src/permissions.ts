@@ -31,4 +31,26 @@ export const M02_PERMISSIONS = {
 } as const;
 
 export type M02Permission = (typeof M02_PERMISSIONS)[keyof typeof M02_PERMISSIONS];
-export type Permission = M01Permission | M02Permission | (string & {});
+
+export const M03_PERMISSIONS = {
+  VOICE_SUBMISSION_CREATE: 'voice_submission.create',
+  VOICE_SUBMISSION_READ: 'voice_submission.read',
+  TRANSCRIPT_READ: 'transcript.read',
+  AI_ANALYSIS_READ: 'ai_analysis.read',
+  NEED_CREATE: 'need.create',
+  NEED_READ: 'need.read',
+  NEED_REVIEW: 'need.review',
+  WORK_ORDER_CREATE: 'work_order.create',
+  WORK_ORDER_READ: 'work_order.read',
+  WORK_ORDER_ASSIGN: 'work_order.assign',
+  WORK_ORDER_TRANSITION: 'work_order.transition',
+  WORK_ORDER_VERIFY: 'work_order.verify',
+  WORK_ORDER_CLOSE: 'work_order.close',
+  FAMILY_SUMMARY_READ: 'family_summary.read',
+  FAMILY_SUMMARY_PUBLISH: 'family_summary.publish',
+  RATING_CREATE: 'rating.create',
+  RATING_READ: 'rating.read',
+} as const;
+
+export type M03Permission = (typeof M03_PERMISSIONS)[keyof typeof M03_PERMISSIONS];
+export type Permission = M01Permission | M02Permission | M03Permission | (string & {});

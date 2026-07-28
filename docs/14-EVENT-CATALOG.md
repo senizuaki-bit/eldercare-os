@@ -62,11 +62,14 @@
 | AI_NEED_ANALYSIS.FAILED | AI 失败 | 人工需求创建 |
 | NEED.CREATED | 需求建立 | 工单、时间线、报表 |
 | NEED.REVIEW_REQUIRED | 需人工复核 | 主管队列 |
+| NEED.REVIEWED | 人工确认或驳回 AI 草稿需求 | 工单、时间线、审计 |
 | NEED.SPLIT | 一个输入拆为多需求 | 时间线、关联 |
 | WORK_ORDER.CREATED | 创建工单 | 调度、通知 |
+| WORK_ORDER.REVISED | 人工复核在派单前修订 NEW 工单内容、优先级或期限 | 调度、审计、实时队列 |
 | WORK_ORDER.ASSIGNED | 完成分配 | 护工推送、SLA |
 | WORK_ORDER.ACCEPTED | 护工接单 | 主管、SLA |
-| WORK_ORDER.ARRIVED | 到场 | 计时、家属可选摘要 |
+| WORK_ORDER.ARRIVED | 追加不可变到场记录与时间戳；不是状态转换 | 计时、家属可选摘要 |
+| WORK_ORDER.IN_PROGRESS | 从已接单工单开始处理 | 主管、SLA |
 | WORK_ORDER.COMPLETED | 服务完成草稿确认 | 验证、摘要、评价 |
 | WORK_ORDER.VERIFIED | 服务复核 | 家属摘要、评价、绩效 |
 | WORK_ORDER.CLOSED | 正式关闭 | 报表、归档 |

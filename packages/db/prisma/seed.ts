@@ -4,9 +4,11 @@ import { loadEnvFile } from 'node:process';
 import {
   M01_PERMISSIONS,
   M02_PERMISSIONS,
+  M03_PERMISSIONS,
   ROLE_CODES,
   type M01Permission,
   type M02Permission,
+  type M03Permission,
   type Role,
 } from '@eldercare/authz';
 import { hashPassword } from '@eldercare/authz/server';
@@ -55,6 +57,7 @@ const ids = {
   },
   auditM01: '90000000-0000-4000-8000-000000000001',
   auditM02: '90000000-0000-4000-8000-000000000002',
+  auditM03: '90000000-0000-4000-8000-000000000003',
 } as const;
 
 const buildingIds = [fixedId('81000000', 1), fixedId('81000000', 2)] as const;
@@ -81,7 +84,7 @@ const roleIds = Object.fromEntries(
   ROLE_CODES.map((role, index) => [role, fixedId('40000000', index + 1)]),
 ) as Record<Role, string>;
 
-type SeedPermission = M01Permission | M02Permission;
+type SeedPermission = M01Permission | M02Permission | M03Permission;
 
 const permissionDefinitions: readonly (readonly [SeedPermission, string])[] = [
   [M01_PERMISSIONS.SESSION_SELF_READ, '查看当前会话'],
@@ -108,6 +111,23 @@ const permissionDefinitions: readonly (readonly [SeedPermission, string])[] = [
   [M02_PERMISSIONS.STAFF_MANAGE, '管理员工档案'],
   [M02_PERMISSIONS.SHIFT_READ, '查看排班'],
   [M02_PERMISSIONS.SHIFT_MANAGE, '管理排班'],
+  [M03_PERMISSIONS.VOICE_SUBMISSION_CREATE, '创建语音提交'],
+  [M03_PERMISSIONS.VOICE_SUBMISSION_READ, '查看授权语音提交'],
+  [M03_PERMISSIONS.TRANSCRIPT_READ, '查看授权转写'],
+  [M03_PERMISSIONS.AI_ANALYSIS_READ, '查看 AI 分析草稿'],
+  [M03_PERMISSIONS.NEED_CREATE, '创建需求'],
+  [M03_PERMISSIONS.NEED_READ, '查看需求'],
+  [M03_PERMISSIONS.NEED_REVIEW, '复核需求'],
+  [M03_PERMISSIONS.WORK_ORDER_CREATE, '创建工作单'],
+  [M03_PERMISSIONS.WORK_ORDER_READ, '查看工作单'],
+  [M03_PERMISSIONS.WORK_ORDER_ASSIGN, '指派工作单'],
+  [M03_PERMISSIONS.WORK_ORDER_TRANSITION, '流转工作单'],
+  [M03_PERMISSIONS.WORK_ORDER_VERIFY, '核验工作单'],
+  [M03_PERMISSIONS.WORK_ORDER_CLOSE, '关闭工作单'],
+  [M03_PERMISSIONS.FAMILY_SUMMARY_READ, '查看家属安全摘要'],
+  [M03_PERMISSIONS.FAMILY_SUMMARY_PUBLISH, '发布家属安全摘要'],
+  [M03_PERMISSIONS.RATING_CREATE, '创建服务评价'],
+  [M03_PERMISSIONS.RATING_READ, '查看服务评价'],
 ];
 
 const permissionIds = Object.fromEntries(
@@ -148,12 +168,18 @@ const rolePermissionMap: Partial<Record<Role, readonly SeedPermission[]>> = {
     M01_PERMISSIONS.USER_READ,
     M01_PERMISSIONS.ROLE_READ,
     ...Object.values(M02_PERMISSIONS),
+    ...Object.values(M03_PERMISSIONS),
   ],
   CAREGIVER: [
     ...selfSessionPermissions,
     M01_PERMISSIONS.FACILITY_READ,
     M02_PERMISSIONS.ELDER_READ_BASIC,
     M02_PERMISSIONS.ELDER_TIMELINE_READ,
+    M03_PERMISSIONS.VOICE_SUBMISSION_CREATE,
+    M03_PERMISSIONS.VOICE_SUBMISSION_READ,
+    M03_PERMISSIONS.NEED_READ,
+    M03_PERMISSIONS.WORK_ORDER_READ,
+    M03_PERMISSIONS.WORK_ORDER_TRANSITION,
   ],
   DEVICE_MANAGER: [
     ...selfSessionPermissions,
@@ -166,12 +192,20 @@ const rolePermissionMap: Partial<Record<Role, readonly SeedPermission[]>> = {
     M02_PERMISSIONS.ELDER_READ_SENSITIVE,
     M02_PERMISSIONS.ELDER_TIMELINE_READ,
     M02_PERMISSIONS.CONSENT_MANAGE,
+    M03_PERMISSIONS.VOICE_SUBMISSION_CREATE,
+    M03_PERMISSIONS.VOICE_SUBMISSION_READ,
+    M03_PERMISSIONS.NEED_CREATE,
+    M03_PERMISSIONS.WORK_ORDER_READ,
+    M03_PERMISSIONS.WORK_ORDER_VERIFY,
+    M03_PERMISSIONS.RATING_CREATE,
   ],
   FAMILY: [
     ...selfSessionPermissions,
     M01_PERMISSIONS.FACILITY_READ,
     M02_PERMISSIONS.ELDER_READ_BASIC,
     M02_PERMISSIONS.ELDER_TIMELINE_READ,
+    M03_PERMISSIONS.FAMILY_SUMMARY_READ,
+    M03_PERMISSIONS.RATING_CREATE,
   ],
 };
 
@@ -284,6 +318,28 @@ const M02_SEED_EXPECTATIONS = {
   shifts: 17,
   shiftAssignments: 17,
   shiftAssignmentScopes: 17,
+} as const;
+
+const M03_SEED_EXPECTATIONS = {
+  voiceSubmissions: 1,
+  transcripts: 1,
+  aiAnalyses: 1,
+  needs: 3,
+  needLinks: 1,
+  workOrders: 2,
+  assignments: 2,
+  transitions: 9,
+  arrivals: 1,
+  completions: 1,
+  familySummaries: 1,
+  ratings: 1,
+} as const;
+
+const M03_AUDIT_SAFE_COUNTS = {
+  needs: M03_SEED_EXPECTATIONS.needs,
+  workOrders: M03_SEED_EXPECTATIONS.workOrders,
+  assignments: M03_SEED_EXPECTATIONS.assignments,
+  transitions: M03_SEED_EXPECTATIONS.transitions,
 } as const;
 
 function startOfShanghaiWeek(timestamp: number): number {
@@ -402,6 +458,7 @@ async function seed(): Promise<void> {
 
   try {
     await prisma.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe("SET LOCAL eldercare.seed_mode = 'on'");
       for (const [id, slug, name] of [
         [ids.organizations.platform, 'platform-system', '平台运维组织（虚构）'],
         [ids.organizations.qinglan, 'qinglan-demo', '青岚颐养中心（虚构）'],
@@ -430,6 +487,33 @@ async function seed(): Promise<void> {
         organizationId: ids.organizations.qinglan,
         facilityId: ids.facilities.qinglanMain,
       };
+      await transaction.rating.deleteMany({ where: mainFacilityFilter });
+      await transaction.familySummary.deleteMany({ where: mainFacilityFilter });
+      await transaction.serviceCompletion.deleteMany({ where: mainFacilityFilter });
+      await transaction.workOrderArrival.deleteMany({ where: mainFacilityFilter });
+      await transaction.workOrderTransition.deleteMany({ where: mainFacilityFilter });
+      await transaction.workOrderAssignment.deleteMany({ where: mainFacilityFilter });
+      await transaction.aIAnalysis.deleteMany({
+        where: {
+          ...mainFacilityFilter,
+          transcript: { voiceSubmission: { purpose: 'WORK_ORDER_COMPLETION' } },
+        },
+      });
+      await transaction.transcript.deleteMany({
+        where: {
+          ...mainFacilityFilter,
+          voiceSubmission: { purpose: 'WORK_ORDER_COMPLETION' },
+        },
+      });
+      await transaction.voiceSubmission.deleteMany({
+        where: { ...mainFacilityFilter, purpose: 'WORK_ORDER_COMPLETION' },
+      });
+      await transaction.workOrder.deleteMany({ where: mainFacilityFilter });
+      await transaction.needLink.deleteMany({ where: mainFacilityFilter });
+      await transaction.need.deleteMany({ where: mainFacilityFilter });
+      await transaction.aIAnalysis.deleteMany({ where: mainFacilityFilter });
+      await transaction.transcript.deleteMany({ where: mainFacilityFilter });
+      await transaction.voiceSubmission.deleteMany({ where: mainFacilityFilter });
       await transaction.elderTimelineEntry.deleteMany({ where: mainFacilityFilter });
       await transaction.elderCareAssignment.deleteMany({ where: mainFacilityFilter });
       await transaction.shiftAssignmentScope.deleteMany({ where: mainFacilityFilter });
@@ -888,6 +972,28 @@ async function seed(): Promise<void> {
           reasonCode: 'NO_ACTIVE_BASIS',
           recordedByUserId: ids.users.supervisor,
         },
+        {
+          id: fixedId('8f000000', 18),
+          ...mainFacilityFilter,
+          elderId: elderIds[0] ?? '',
+          purpose: 'VOICE_CAPTURE',
+          decision: 'GRANTED',
+          authority: 'ELDER',
+          consentVersion: 1,
+          effectiveAt: new Date(seedStartedAt - 30 * DAY),
+          recordedByUserId: ids.users.elder,
+        },
+        {
+          id: fixedId('8f000000', 19),
+          ...mainFacilityFilter,
+          elderId: elderIds[0] ?? '',
+          purpose: 'TRANSCRIPTION_AI_ANALYSIS',
+          decision: 'GRANTED',
+          authority: 'ELDER',
+          consentVersion: 1,
+          effectiveAt: new Date(seedStartedAt - 30 * DAY),
+          recordedByUserId: ids.users.elder,
+        },
       ];
       await transaction.consentRecord.createMany({ data: [...familySharingConsents, ...consentHistory] });
 
@@ -896,6 +1002,7 @@ async function seed(): Promise<void> {
           { id: fixedId('91000000', 1), ...mainFacilityFilter, elderId: elderIds[0] ?? '', familyRelationshipId: fixedId('8a000000', 1), consentRecordId: fixedId('8f000000', 1), field: 'PREFERRED_NAME', allowed: true, validFrom: new Date(seedStartedAt - 30 * DAY) },
           { id: fixedId('91000000', 2), ...mainFacilityFilter, elderId: elderIds[0] ?? '', familyRelationshipId: fixedId('8a000000', 1), consentRecordId: fixedId('8f000000', 1), field: 'CURRENT_RESIDENCE', allowed: true, validFrom: new Date(seedStartedAt - 30 * DAY) },
           { id: fixedId('91000000', 3), ...mainFacilityFilter, elderId: elderIds[0] ?? '', familyRelationshipId: fixedId('8a000000', 1), field: 'PERSONAL_BASELINE_SUMMARY', allowed: false, validFrom: new Date(seedStartedAt - 30 * DAY) },
+          { id: fixedId('91000000', 4), ...mainFacilityFilter, elderId: elderIds[0] ?? '', familyRelationshipId: fixedId('8a000000', 1), consentRecordId: fixedId('8f000000', 1), field: 'TIMELINE_SUMMARY', allowed: true, validFrom: new Date(seedStartedAt - 30 * DAY) },
         ],
       });
 
@@ -1009,6 +1116,366 @@ async function seed(): Promise<void> {
       }));
       await transaction.elderTimelineEntry.createMany({ data: timelineRows });
 
+      const canonicalRequestedAt = new Date(seedStartedAt - 30 * 60 * 1000);
+      const canonicalAcceptedAt = new Date(seedStartedAt - 20 * 60 * 1000);
+      const historicalCreatedAt = new Date(seedStartedAt - 3 * DAY);
+      const historicalAssignedAt = new Date(historicalCreatedAt.getTime() + 10 * 60 * 1000);
+      const historicalAcceptedAt = new Date(historicalCreatedAt.getTime() + 20 * 60 * 1000);
+      const historicalArrivedAt = new Date(historicalCreatedAt.getTime() + 30 * 60 * 1000);
+      const historicalStartedAt = new Date(historicalCreatedAt.getTime() + 40 * 60 * 1000);
+      const historicalCompletedAt = new Date(historicalCreatedAt.getTime() + HOUR);
+      const historicalVerifiedAt = new Date(historicalCreatedAt.getTime() + 2 * HOUR);
+      const elderId = elderIds[0] ?? '';
+      const canonicalCorrelationId = 'seed-m03-hot-water-dizziness';
+      const historicalCorrelationId = 'seed-m03-family-summary';
+
+      await transaction.voiceSubmission.create({
+        data: {
+          id: fixedId('a3000000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          submittedByUserId: ids.users.elder,
+          purpose: 'ELDER_REQUEST',
+          status: 'COMPLETED',
+          bucket: 'eldercare-private',
+          objectKey: `voice/sealed/${ids.organizations.qinglan}/${ids.facilities.qinglanMain}/${elderId}/${fixedId('a3000000', 1)}/a3000000-0000-4000-8000-000000000099`,
+          mimeType: 'audio/webm',
+          declaredSizeBytes: 4096,
+          actualSizeBytes: 4096,
+          checksumSha256: 'a'.repeat(64),
+          fixtureKey: 'HOT_WATER_DIZZINESS_V1',
+          uploadedAt: canonicalRequestedAt,
+          completedAt: new Date(canonicalRequestedAt.getTime() + 4_000),
+          retentionUntil: new Date(seedStartedAt + 30 * DAY),
+          idempotencyKey: 'seed-m03-voice-hot-water-dizziness',
+          correlationId: canonicalCorrelationId,
+          createdAt: canonicalRequestedAt,
+        },
+      });
+
+      await transaction.transcript.create({
+        data: {
+          id: fixedId('a3100000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          voiceSubmissionId: fixedId('a3000000', 1),
+          status: 'COMPLETED',
+          text: '我想喝热水，今天有点头晕。',
+          confidence: 0.98,
+          durationMs: 3200,
+          provider: 'deterministic-fake',
+          model: 'fixture-transcriber-v1',
+          providerVersion: '1.0.0',
+          retentionUntil: new Date(seedStartedAt + 30 * DAY),
+          correlationId: canonicalCorrelationId,
+          createdAt: canonicalRequestedAt,
+          completedAt: new Date(canonicalRequestedAt.getTime() + 5_000),
+        },
+      });
+
+      await transaction.aIAnalysis.create({
+        data: {
+          id: fixedId('a3200000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          transcriptId: fixedId('a3100000', 1),
+          status: 'COMPLETED',
+          output: {
+            summary: '老人希望喝热水，并表示今天有点头晕。',
+            categories: ['DAILY_LIVING', 'HEALTH_CONCERN'],
+            urgencySuggestion: 'PRIORITY',
+            reportedConcerns: ['头晕'],
+            safetyFlags: ['DIZZINESS_REQUIRES_REVIEW'],
+            emotionObservation: null,
+            followUpQuestions: ['头晕是否突然出现，是否伴随胸痛、呼吸困难或跌倒？'],
+            requiresHumanReview: true,
+            subIntents: [
+              { category: 'DAILY_LIVING', summary: '提供适温热水。', urgencySuggestion: 'ROUTINE' },
+              { category: 'HEALTH_CONCERN', summary: '人工查看老人今天报告的头晕。', urgencySuggestion: 'PRIORITY' },
+            ],
+          },
+          confidence: 0.96,
+          evidence: ['老人原话包含“喝热水”与“头晕”两个明确意图。'],
+          provider: 'deterministic-fake',
+          model: 'fixture-needs-v1',
+          promptVersion: 'need-analysis-v1',
+          schemaVersion: 'need-analysis-output-v1',
+          retentionUntil: new Date(seedStartedAt + 30 * DAY),
+          correlationId: canonicalCorrelationId,
+          createdAt: canonicalRequestedAt,
+          completedAt: new Date(canonicalRequestedAt.getTime() + 6_000),
+        },
+      });
+
+      await transaction.need.createMany({
+        data: [
+          {
+            id: fixedId('a3300000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            voiceSubmissionId: fixedId('a3000000', 1),
+            aiAnalysisId: fixedId('a3200000', 1),
+            source: 'VOICE',
+            summary: '提供适温热水。',
+            category: 'DAILY_LIVING',
+            urgencySuggestion: 'ROUTINE',
+            priority: 'ROUTINE',
+            requiresHumanReview: false,
+            safetyRuleCodes: [],
+            status: 'CONFIRMED',
+            reviewedByUserId: ids.users.supervisor,
+            reviewedAt: new Date(canonicalRequestedAt.getTime() + 8_000),
+            reviewReasonCode: 'SAFE_DAILY_LIVING_REQUEST',
+            idempotencyKey: 'seed-m03-need-hot-water',
+            correlationId: canonicalCorrelationId,
+            createdAt: canonicalRequestedAt,
+          },
+          {
+            id: fixedId('a3300000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            voiceSubmissionId: fixedId('a3000000', 1),
+            aiAnalysisId: fixedId('a3200000', 1),
+            source: 'VOICE',
+            summary: '人工查看老人今天报告的头晕。',
+            category: 'HEALTH_CONCERN',
+            urgencySuggestion: 'PRIORITY',
+            priority: 'PRIORITY',
+            requiresHumanReview: true,
+            safetyRuleCodes: ['HEALTH_CONCERN_REQUIRES_HUMAN_REVIEW'],
+            status: 'REVIEW_REQUIRED',
+            idempotencyKey: 'seed-m03-need-dizziness',
+            correlationId: canonicalCorrelationId,
+            createdAt: canonicalRequestedAt,
+          },
+          {
+            id: fixedId('a3300000', 3),
+            ...mainFacilityFilter,
+            elderId,
+            source: 'MANUAL',
+            summary: '送达房间饮水并完成服务确认。',
+            category: 'DAILY_LIVING',
+            urgencySuggestion: 'ROUTINE',
+            priority: 'ROUTINE',
+            requiresHumanReview: false,
+            safetyRuleCodes: [],
+            status: 'FULFILLED',
+            reviewedByUserId: ids.users.supervisor,
+            reviewedAt: historicalAssignedAt,
+            reviewReasonCode: 'MANUAL_DEMO_REQUEST',
+            idempotencyKey: 'seed-m03-need-completed-water',
+            correlationId: historicalCorrelationId,
+            createdAt: historicalCreatedAt,
+          },
+        ],
+      });
+
+      await transaction.needLink.create({
+        data: {
+          id: fixedId('a3400000', 1),
+          ...mainFacilityFilter,
+          sourceNeedId: fixedId('a3300000', 1),
+          targetNeedId: fixedId('a3300000', 2),
+          kind: 'SPLIT_SIBLING',
+          correlationId: canonicalCorrelationId,
+          createdAt: canonicalRequestedAt,
+        },
+      });
+
+      await transaction.workOrder.createMany({
+        data: [
+          {
+            id: fixedId('a3500000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            primaryNeedId: fixedId('a3300000', 1),
+            code: 'M03-001',
+            title: '提供适温热水',
+            summary: '老人请求一杯适温热水。',
+            priority: 'ROUTINE',
+            status: 'ACCEPTED',
+            dueAt: new Date(seedStartedAt + HOUR),
+            acceptedAt: canonicalAcceptedAt,
+            createdByUserId: ids.users.supervisor,
+            idempotencyKey: 'seed-m03-work-order-active',
+            correlationId: canonicalCorrelationId,
+            version: 3,
+            createdAt: canonicalRequestedAt,
+          },
+          {
+            id: fixedId('a3500000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            primaryNeedId: fixedId('a3300000', 3),
+            code: 'M03-002',
+            title: '历史送水服务',
+            summary: '已完成送水并由老人确认。',
+            priority: 'ROUTINE',
+            status: 'VERIFIED',
+            dueAt: new Date(historicalCreatedAt.getTime() + 2 * HOUR),
+            acceptedAt: historicalAcceptedAt,
+            arrivedAt: historicalArrivedAt,
+            startedAt: historicalStartedAt,
+            completedAt: historicalCompletedAt,
+            verifiedAt: historicalVerifiedAt,
+            createdByUserId: ids.users.supervisor,
+            idempotencyKey: 'seed-m03-work-order-completed',
+            correlationId: historicalCorrelationId,
+            version: 7,
+            createdAt: historicalCreatedAt,
+          },
+        ],
+      });
+
+      await transaction.workOrderAssignment.createMany({
+        data: [
+          {
+            id: fixedId('a3600000', 1),
+            ...mainFacilityFilter,
+            workOrderId: fixedId('a3500000', 1),
+            targetTeamId: teamIds[0],
+            assigneeStaffProfileId: caregiverStaffIds[0],
+            shiftAssignmentId: fixedId('96000000', 1),
+            status: 'CLAIMED',
+            assignedByUserId: ids.users.supervisor,
+            assignedAt: new Date(canonicalRequestedAt.getTime() + 10_000),
+            claimedAt: canonicalAcceptedAt,
+            reasonCode: 'CURRENT_SHIFT_ASSIGNEE',
+          },
+          {
+            id: fixedId('a3600000', 2),
+            ...mainFacilityFilter,
+            workOrderId: fixedId('a3500000', 2),
+            targetTeamId: teamIds[0],
+            assigneeStaffProfileId: caregiverStaffIds[0],
+            status: 'CLAIMED',
+            assignedByUserId: ids.users.supervisor,
+            assignedAt: historicalAssignedAt,
+            claimedAt: historicalAcceptedAt,
+            reasonCode: 'HISTORICAL_DEMO_ASSIGNEE',
+          },
+        ],
+      });
+
+      await transaction.workOrderTransition.createMany({
+        data: [
+          { id: fixedId('a3700000', 1), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 1), fromStatus: null, toStatus: 'NEW', fromVersion: 0, toVersion: 1, actorUserId: ids.users.supervisor, reasonCode: 'NEED_CONFIRMED', correlationId: canonicalCorrelationId, occurredAt: canonicalRequestedAt },
+          { id: fixedId('a3700000', 2), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 1), fromStatus: 'NEW', toStatus: 'ASSIGNED', fromVersion: 1, toVersion: 2, actorUserId: ids.users.supervisor, reasonCode: 'CURRENT_SHIFT_ASSIGNEE', correlationId: canonicalCorrelationId, occurredAt: new Date(canonicalRequestedAt.getTime() + 10_000) },
+          { id: fixedId('a3700000', 3), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 1), fromStatus: 'ASSIGNED', toStatus: 'ACCEPTED', fromVersion: 2, toVersion: 3, actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_ACCEPTED', correlationId: canonicalCorrelationId, occurredAt: canonicalAcceptedAt },
+          { id: fixedId('a3700000', 4), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 2), fromStatus: null, toStatus: 'NEW', fromVersion: 0, toVersion: 1, actorUserId: ids.users.supervisor, reasonCode: 'MANUAL_NEED_CONFIRMED', correlationId: historicalCorrelationId, occurredAt: historicalCreatedAt },
+          { id: fixedId('a3700000', 5), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 2), fromStatus: 'NEW', toStatus: 'ASSIGNED', fromVersion: 1, toVersion: 2, actorUserId: ids.users.supervisor, reasonCode: 'DEMO_ASSIGNEE', correlationId: historicalCorrelationId, occurredAt: historicalAssignedAt },
+          { id: fixedId('a3700000', 6), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 2), fromStatus: 'ASSIGNED', toStatus: 'ACCEPTED', fromVersion: 2, toVersion: 3, actorUserId: ids.users.caregiver, reasonCode: 'CAREGIVER_ACCEPTED', correlationId: historicalCorrelationId, occurredAt: historicalAcceptedAt },
+          { id: fixedId('a3700000', 7), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 2), fromStatus: 'ACCEPTED', toStatus: 'IN_PROGRESS', fromVersion: 4, toVersion: 5, actorUserId: ids.users.caregiver, reasonCode: 'SERVICE_STARTED', correlationId: historicalCorrelationId, occurredAt: historicalStartedAt },
+          { id: fixedId('a3700000', 8), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 2), fromStatus: 'IN_PROGRESS', toStatus: 'COMPLETED', fromVersion: 5, toVersion: 6, actorUserId: ids.users.caregiver, reasonCode: 'SERVICE_COMPLETED', correlationId: historicalCorrelationId, occurredAt: historicalCompletedAt },
+          { id: fixedId('a3700000', 9), ...mainFacilityFilter, workOrderId: fixedId('a3500000', 2), fromStatus: 'COMPLETED', toStatus: 'VERIFIED', fromVersion: 6, toVersion: 7, actorUserId: ids.users.elder, reasonCode: 'ELDER_VERIFIED', correlationId: historicalCorrelationId, occurredAt: historicalVerifiedAt },
+        ],
+      });
+
+      await transaction.workOrderArrival.create({
+        data: {
+          id: fixedId('a3800000', 1),
+          ...mainFacilityFilter,
+          workOrderId: fixedId('a3500000', 2),
+          actorUserId: ids.users.caregiver,
+          fromVersion: 3,
+          toVersion: 4,
+          reasonCode: 'CAREGIVER_ARRIVED',
+          arrivedAt: historicalArrivedAt,
+          correlationId: historicalCorrelationId,
+          createdAt: historicalArrivedAt,
+        },
+      });
+
+      await transaction.serviceCompletion.create({
+        data: {
+          id: fixedId('a3900000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          workOrderId: fixedId('a3500000', 2),
+          submittedByStaffProfileId: caregiverStaffIds[0] ?? '',
+          noteSource: 'TEXT',
+          noteText: '已将适温饮水送至房间，并当面确认服务完成。',
+          confirmedAt: historicalCompletedAt,
+          completionChecklist: {
+            schemaVersion: 1,
+            required: false,
+            riskReasons: [],
+            expectedCodes: [],
+            confirmations: [],
+          },
+          checklistConfirmedAt: null,
+          correlationId: historicalCorrelationId,
+          createdAt: historicalCompletedAt,
+        },
+      });
+
+      await transaction.familySummary.create({
+        data: {
+          id: fixedId('a3a00000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          workOrderId: fixedId('a3500000', 2),
+          status: 'PUBLISHED',
+          title: '饮水服务已完成',
+          summary: '工作人员已完成饮水服务，老人已确认。',
+          serviceCompletedAt: historicalCompletedAt,
+          publishedAt: new Date(historicalVerifiedAt.getTime() + 30 * 60 * 1000),
+          publishedByUserId: ids.users.supervisor,
+          correlationId: historicalCorrelationId,
+          createdAt: historicalCompletedAt,
+        },
+      });
+
+      await transaction.rating.create({
+        data: {
+          id: fixedId('a3b00000', 1),
+          ...mainFacilityFilter,
+          elderId,
+          workOrderId: fixedId('a3500000', 2),
+          raterUserId: ids.users.elder,
+          actorType: 'ELDER',
+          score: 5,
+          comment: '送得很及时，谢谢。',
+          requiresFollowUp: false,
+          idempotencyKey: 'seed-m03-rating-elder',
+          correlationId: historicalCorrelationId,
+          createdAt: new Date(historicalVerifiedAt.getTime() + HOUR),
+        },
+      });
+
+      await transaction.elderTimelineEntry.createMany({
+        data: [
+          {
+            id: fixedId('a3c00000', 1),
+            ...mainFacilityFilter,
+            elderId,
+            eventType: 'WORK_ORDER_ACCEPTED',
+            sourceResourceType: 'WORK_ORDER',
+            sourceResourceId: fixedId('a3500000', 1),
+            visibility: 'ELDER_VISIBLE',
+            safeSummaryCode: 'SERVICE_REQUEST_ACCEPTED',
+            safeMetadata: { workOrderCode: 'M03-001' },
+            actorUserId: ids.users.caregiver,
+            correlationId: canonicalCorrelationId,
+            occurredAt: canonicalAcceptedAt,
+          },
+          {
+            id: fixedId('a3c00000', 2),
+            ...mainFacilityFilter,
+            elderId,
+            eventType: 'FAMILY_SUMMARY_PUBLISHED',
+            sourceResourceType: 'FAMILY_SUMMARY',
+            sourceResourceId: fixedId('a3a00000', 1),
+            visibility: 'FAMILY_ELIGIBLE',
+            safeSummaryCode: 'SERVICE_COMPLETED',
+            safeMetadata: { workOrderCode: 'M03-002' },
+            actorUserId: ids.users.supervisor,
+            correlationId: historicalCorrelationId,
+            occurredAt: new Date(historicalVerifiedAt.getTime() + 30 * 60 * 1000),
+          },
+        ],
+      });
+
       await transaction.auditEvent.createMany({
         data: [
           {
@@ -1033,7 +1500,19 @@ async function seed(): Promise<void> {
             resourceType: 'milestone',
             resourceId: 'M02',
             correlationId: 'seed-m02-elder-management',
-            safeMetadata: { fictionalDemoData: true, schemaVersion: '1.2', counts: M02_SEED_EXPECTATIONS },
+            safeMetadata: { fictionalDemoData: true, schemaVersion: '1.2', milestone: 'M02', counts: M02_SEED_EXPECTATIONS },
+          },
+          {
+            id: ids.auditM03,
+            organizationId: ids.organizations.qinglan,
+            facilityId: ids.facilities.qinglanMain,
+            actorType: 'SYSTEM',
+            action: 'SYSTEM.M03_SEED_APPLIED',
+            outcome: 'SUCCESS',
+            resourceType: 'milestone',
+            resourceId: 'M03',
+            correlationId: 'seed-m03-needs-workorders',
+            safeMetadata: { fictionalDemoData: true, schemaVersion: '1.3', milestone: 'M03', counts: M03_AUDIT_SAFE_COUNTS },
           },
         ],
         skipDuplicates: true,
@@ -1043,10 +1522,10 @@ async function seed(): Promise<void> {
         where: { key: 'foundation.seed' },
         create: {
           key: 'foundation.seed',
-          value: { schemaVersion: '1.2', milestone: 'M02', containsBusinessFixtures: true, fictionalDemoData: true },
+          value: { schemaVersion: '1.3', milestone: 'M03', containsBusinessFixtures: true, fictionalDemoData: true },
         },
         update: {
-          value: { schemaVersion: '1.2', milestone: 'M02', containsBusinessFixtures: true, fictionalDemoData: true },
+          value: { schemaVersion: '1.3', milestone: 'M03', containsBusinessFixtures: true, fictionalDemoData: true },
         },
       });
     }, { maxWait: 10_000, timeout: 120_000 });

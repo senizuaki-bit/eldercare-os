@@ -143,7 +143,14 @@ describe.sequential('M01 authentication and tenant authorization', () => {
       .query({ pageSize: 100 })
       .expect(200);
     expect(JSON.stringify(audit.body)).toContain('SECURITY.TENANT_CONTEXT_DENIED');
-    expect(JSON.stringify(audit.body)).not.toMatch(/password|token|secret|transcript|coordinate/i);
+    for (const event of (audit.body as { items: Array<{ safeMetadata: Record<string, unknown> }> }).items) {
+      expect(Object.keys(event.safeMetadata)).toEqual(
+        expect.not.arrayContaining([
+          expect.stringMatching(/password|token|secret|transcript|coordinate/i),
+        ]),
+      );
+      expect(JSON.stringify(event.safeMetadata)).not.toContain(DEMO_PASSWORD);
+    }
   });
 
   it('enforces permissions in the API even when a protected URL is known', async () => {

@@ -18,7 +18,7 @@ import { clearPrivateClientState, recordPrincipal } from './principal-state';
 import type { Role } from './types';
 
 interface AuthenticatedPortalProps {
-  readonly initialTab?: string;
+  readonly initialPath?: readonly string[];
   readonly requestedRole: Role;
 }
 
@@ -67,7 +67,7 @@ function ProtectedStatus({
   );
 }
 
-export function AuthenticatedPortal({ initialTab, requestedRole }: AuthenticatedPortalProps) {
+export function AuthenticatedPortal({ initialPath, requestedRole }: AuthenticatedPortalProps) {
   const router = useRouter();
   const [session, setSession] = useState<AuthSession | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -141,7 +141,7 @@ export function AuthenticatedPortal({ initialTab, requestedRole }: Authenticated
 
   return (
     <MobileExperience
-      initialTab={initialTab}
+      initialPath={initialPath}
       onSignedOut={() => router.replace('/login')}
       role={requestedRole}
       session={session}

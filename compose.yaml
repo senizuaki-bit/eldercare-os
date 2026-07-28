@@ -59,7 +59,11 @@ services:
     entrypoint: >-
       /bin/sh -c "mc alias set local http://minio:9000 eldercare_dev eldercare_dev_only &&
       mc mb --ignore-existing local/eldercare-private &&
-      mc anonymous set none local/eldercare-private"
+      mc anonymous set none local/eldercare-private &&
+      mc ilm rule import local/eldercare-private < /config/voice-lifecycle.json &&
+      mc ilm rule ls local/eldercare-private"
+    volumes:
+      - ./infra/docker/minio/voice-lifecycle.json:/config/voice-lifecycle.json:ro
     restart: 'no'
 
   mosquitto:
