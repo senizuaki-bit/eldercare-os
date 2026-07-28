@@ -125,6 +125,7 @@ For each completed milestone record:
   - `pnpm typecheck` — passed.
   - `pnpm test` — passed; API `190/190`, admin `42/42`, mobile `74/74`, worker `15/15`, plus all package suites.
   - `pnpm test:integration` — passed; API `37/37`, worker `2/2`, IoT simulator `2/2`.
+  - Integration isolation regression — passed by running the M03 temporary-overlap fixture test before the formerly failing M02 live-shift projection test; the full API integration suite then passed `37/37`.
   - `pnpm build` — passed for the full workspace; the final mobile-only rebuild also passed after visual polish.
   - `pnpm test:e2e` — `16/16` passed at admin `1440×900`/`1280×900` and mobile `375×812`/`360×800`, including serious/critical Axe checks.
   - `pnpm test:e2e:offline` — `1/1` passed against production builds.

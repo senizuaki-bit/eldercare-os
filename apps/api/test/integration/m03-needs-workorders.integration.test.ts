@@ -1180,6 +1180,27 @@ describe.sequential('M03 voice request and auditable work-order workflow', () =>
       .expect(409);
     expect(bodyRecord(bodyRecord(ambiguous).error).code)
       .toBe('ASSIGNMENT_SHIFT_SELECTION_REQUIRED');
+
+    // Keep this regression fixture from becoming a second live caregiver
+    // shift for later integration files that share the seeded database.
+    const cleanupAt = new Date();
+    await database.client.$transaction([
+      database.client.dataScope.updateMany({
+        where: {
+          userRoleId: overlappingCaregiverRole.id,
+          scopeKey: `active-shift:${overlappingAssignment.id}`,
+        },
+        data: { validUntil: cleanupAt },
+      }),
+      database.client.shiftAssignment.update({
+        where: { id: overlappingAssignment.id },
+        data: { status: 'CANCELLED' },
+      }),
+      database.client.shift.update({
+        where: { id: overlappingShift.id },
+        data: { status: 'COMPLETED', endsAt: cleanupAt },
+      }),
+    ]);
   });
 
   it('does not let assign race past a rejecting human review', async () => {

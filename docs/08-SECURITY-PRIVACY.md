@@ -85,9 +85,10 @@
 - finalize 将 staging 对象的源 ETag、候选 sealed key 和有界租约一起持久化，再以 `CopySourceIfMatch` 封存；并发重试不能把后来覆盖的 staging 内容替换为正式音频。
 - 取消、同意撤回或保留期到期会先写入删除 fence，阻止新的封存和敏感持久化；已知 staging/sealed 对象和封存租约结清后才写 `objectDeletedAt`。此外 worker 直接分页轮转扫描 `voice/staging/`，只删除 `LastModified` 超过安全窗的对象，因此授权到期前已开始、任意晚才落盘的 POST 会从实际完成时间重新计时并被发现，不依赖未知的请求持续时间，也不对已完成业务记录制造永久 version 写放大。
 - worker 只删除超过安全窗、且数据库中不存在相同 bucket 与精确 `uploadObjectKey` 引用的 staging 对象；引用查询失败时 fail closed，不删除任何候选对象。
+- 数据库候选使用有界 `(retentionUntil, id)` keyset 游标和 overscan 跨轮推进；永久失败的最老对象可以重试，但不能持续占满固定批次并饿死后续同意撤回或到期记录。
 - 语音上传授权 TTL 与 staging orphan sweep 最小年龄来自同一强类型配置，启动时强制 sweep 安全窗比授权期多 60 秒以上（本地默认 5 分钟与 15 分钟）。对象存储还必须为 `voice/staging/` 配置独立的短期 lifecycle；本地 MinIO 由幂等 init 配置 1 天过期，作为数据库 worker 暂停或记录异常时的纵深兜底，不能替代 worker 的主动删除。
 - 生产 worker 凭证只授予私有 bucket 的前缀受限 `ListBucket` 和托管语音对象删除权限；lifecycle 由基础设施身份配置，业务 worker 不持有 bucket 管理权限。
-- `VOICE_CAPTURE` 与 `TRANSCRIPTION_AI_ANALYSIS` 两项同意会在上传申请、finalize、处理 claim、结果落库和敏感读取处重新校验。撤回后不再调用新的转写/分析，进行中的 Fake AI 结果也不得落库。
+- `VOICE_CAPTURE` 与 `TRANSCRIPTION_AI_ANALYSIS` 两项同意会在上传申请、finalize、处理 claim、结果落库和敏感读取处重新校验。老人进度与管理端详情投影在同一次读取中取得当前同意快照并 fail closed；撤回后立即隐藏 AI 分析，不再调用新的转写/分析，进行中的 Fake AI 结果也不得落库。
 - 转录与 AI 分析内容有独立保留期和内容删除时间；删除审计只记录内部资源 ID、原因码和 correlation ID，不记录音频、完整转录或 AI 证据正文。
 
 ## 8. Web、API 与会话
