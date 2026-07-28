@@ -11,14 +11,14 @@ export const roleLabels: Record<Role, string> = {
 };
 
 export const sectionsByRole: Record<Role, readonly string[]> = {
-  caregiver: ['home', 'tasks', 'handover', 'profile'],
-  elder: ['home', 'voice-request', 'schedule', 'family', 'profile'],
+  caregiver: ['home', 'emergencies', 'tasks', 'handover', 'profile'],
+  elder: ['home', 'emergency', 'voice-request', 'schedule', 'family', 'profile'],
   family: ['home', 'events', 'services', 'profile']
 };
 
 const detailSectionsByRole: Record<Role, readonly string[]> = {
-  caregiver: ['tasks'],
-  elder: ['voice-request'],
+  caregiver: ['emergencies', 'tasks'],
+  elder: ['emergency', 'voice-request'],
   family: []
 };
 

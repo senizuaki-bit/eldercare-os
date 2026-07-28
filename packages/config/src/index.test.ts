@@ -43,6 +43,24 @@ describe('typed configuration', () => {
       authRateLimitKeyPrefix: 'eldercare:auth',
       voiceUploadAuthorizationTtlSeconds: 300,
       voiceStagingSweepMinAgeSeconds: 900,
+      mqttEmergencyClientId: 'eldercare-m04-worker-emergency-v1',
+      emergencyLocationRetentionHours: 24,
+      emergencyDuplicateWindowSeconds: 30,
+      emergencyFallbackPhone: '400-000-0120',
+      emergencyQueuePrefix: 'eldercare:emergency',
+    });
+  });
+
+  it('validates safe emergency runtime settings', () => {
+    expect(
+      parseServiceConfig({
+        ...validEnvironment,
+        EMERGENCY_QUEUE_PREFIX: 'eldercare:test-emergency',
+        EMERGENCY_FALLBACK_PHONE: '+86 400-000-0120',
+      }),
+    ).toMatchObject({
+      emergencyQueuePrefix: 'eldercare:test-emergency',
+      emergencyFallbackPhone: '+86 400-000-0120',
     });
   });
 

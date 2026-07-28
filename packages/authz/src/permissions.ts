@@ -53,4 +53,25 @@ export const M03_PERMISSIONS = {
 } as const;
 
 export type M03Permission = (typeof M03_PERMISSIONS)[keyof typeof M03_PERMISSIONS];
-export type Permission = M01Permission | M02Permission | M03Permission | (string & {});
+
+export const M04_PERMISSIONS = {
+  EMERGENCY_SIGNAL_CREATE: 'emergency.signal.create',
+  EMERGENCY_READ: 'emergency.read',
+  EMERGENCY_ASSIGN: 'emergency.assign',
+  EMERGENCY_ACKNOWLEDGE: 'emergency.acknowledge',
+  EMERGENCY_RESPOND: 'emergency.respond',
+  EMERGENCY_RESOLVE: 'emergency.resolve',
+  EMERGENCY_REVIEW: 'emergency.review',
+  EMERGENCY_ESCALATE: 'emergency.escalate',
+  EMERGENCY_FAMILY_SUMMARY_READ: 'emergency.family_summary.read',
+  EMERGENCY_NOTIFICATION_PREFERENCE_MANAGE: 'emergency.notification_preference.manage',
+  EMERGENCY_POLICY_READ: 'emergency.policy.read',
+} as const;
+
+export type M04Permission = (typeof M04_PERMISSIONS)[keyof typeof M04_PERMISSIONS];
+export type Permission =
+  | M01Permission
+  | M02Permission
+  | M03Permission
+  | M04Permission
+  | (string & {});

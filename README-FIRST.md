@@ -52,9 +52,9 @@
 
 ### 当前实现进度
 
-- M00–M02 已完成；M02 已通过 [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) 合并。
-- `feat/m03-needs-workorders` 已完成语音需求、确定性 Fake AI 与风险规则、人工复核、工单处置、家属安全摘要和老人评价闭环，并通过完整门禁。
-- M03 已通过完整门禁，并在 [GitHub PR #2](https://github.com/senizuaki-bit/eldercare-os/pull/2) 进入 `IN_REVIEW`。M04 及以后仍未开始。
+- M00–M03 已完成；M02 通过 [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) 合并，M03 通过 [GitHub PR #2](https://github.com/senizuaki-bit/eldercare-os/pull/2) 合并。
+- `codex/m04-emergency` 已完成紧急信号、确定性风险与 SLA、指派、护工响应、位置时效、升级、处置、主管复盘、家属隐私摘要、MQTT 模拟和留存清理，并通过完整门禁。
+- M04 当前为 `IN_REVIEW`，见 [GitHub draft PR #3](https://github.com/senizuaki-bit/eldercare-os/pull/3)；M05 设备心跳丢失、离线告警、维修任务和替代巡查仍未开始。
 
 里程碑的实时状态、已运行证据和已知限制以 `docs/TASK_STATUS.md` 为准。
 

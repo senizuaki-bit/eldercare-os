@@ -14,9 +14,19 @@ import { IdentityModule } from './identity/identity.module.js';
 import { M02Module } from './m02/m02.module.js';
 import { M02ContextGuard } from './m02/m02-context.guard.js';
 import { M03Module } from './m03/m03.module.js';
+import { M04Module } from './m04/m04.module.js';
 
 @Module({
-  imports: [AppConfigModule, DatabaseModule, AuditModule, AuthModule, IdentityModule, M02Module, M03Module],
+  imports: [
+    AppConfigModule,
+    DatabaseModule,
+    AuditModule,
+    AuthModule,
+    IdentityModule,
+    M02Module,
+    M03Module,
+    M04Module,
+  ],
   controllers: [HealthController],
   providers: [
     ReadinessService,

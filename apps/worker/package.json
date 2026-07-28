@@ -17,8 +17,11 @@
     "@eldercare/config": "workspace:*",
     "@eldercare/contracts": "workspace:*",
     "@eldercare/db": "workspace:*",
+    "@eldercare/events": "workspace:*",
     "@eldercare/observability": "workspace:*",
+    "bullmq": "5.81.2",
     "ioredis": "5.11.1",
+    "mqtt": "5.15.2",
     "pg": "8.22.0"
   },
   "devDependencies": {

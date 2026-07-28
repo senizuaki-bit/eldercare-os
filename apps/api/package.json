@@ -21,6 +21,7 @@
     "@eldercare/config": "workspace:*",
     "@eldercare/contracts": "workspace:*",
     "@eldercare/db": "workspace:*",
+    "@eldercare/events": "workspace:*",
     "@eldercare/observability": "workspace:*",
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",

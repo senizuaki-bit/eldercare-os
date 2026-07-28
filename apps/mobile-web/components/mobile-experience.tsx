@@ -22,6 +22,12 @@ import {
   ElderVoiceRequestPage,
   FamilySummariesPanel
 } from './m03-workflows';
+import {
+  CaregiverEmergenciesPanel,
+  CaregiverEmergencyDetail,
+  ElderEmergencyPage,
+  FamilyEmergencyPanel
+} from './m04-workflows';
 import { CaregiverHome, ElderHome, FamilyHome, SecondaryShell } from './role-homes';
 import type { Role } from './types';
 import { isRoleSectionPath, roleLabels } from './types';
@@ -166,6 +172,19 @@ export function MobileExperience({
   };
 
   const renderCurrentPage = () => {
+    if (role === 'elder' && route.section === 'emergency') {
+      return (
+        <ElderEmergencyPage
+          initialEmergencyId={route.detailId}
+          onEmergencyCreated={(emergencyId) =>
+            navigate('emergency', emergencyId, true)
+          }
+          onExit={() => navigate('home')}
+          onNavigationBlockChange={handleNavigationBlockChange}
+        />
+      );
+    }
+
     if (role === 'elder' && route.section === 'voice-request') {
       return (
         <ElderVoiceRequestPage
@@ -174,6 +193,30 @@ export function MobileExperience({
           onNavigationBlockChange={handleNavigationBlockChange}
           onSubmissionCreated={(submissionId) => navigate('voice-request', submissionId, true)}
         />
+      );
+    }
+
+    if (role === 'caregiver' && route.section === 'emergencies') {
+      if (route.detailId) {
+        return (
+          <CaregiverEmergencyDetail
+            emergencyId={route.detailId}
+            onBack={() => navigate('emergencies')}
+            onNavigationBlockChange={handleNavigationBlockChange}
+          />
+        );
+      }
+      return (
+        <div className="role-page caregiver-emergencies-page">
+          <section className="role-intro emergency-role-intro" aria-labelledby="caregiver-emergencies-page-title">
+            <p className="eyebrow">护工端 · 最高优先级</p>
+            <h1 id="caregiver-emergencies-page-title">紧急任务</h1>
+            <p>紧急事件始终排在常规工单之前；打开详情后服务端会再次鉴权。</p>
+          </section>
+          <CaregiverEmergenciesPanel
+            onSelect={(emergencyId) => navigate('emergencies', emergencyId)}
+          />
+        </div>
       );
     }
 
@@ -207,6 +250,7 @@ export function MobileExperience({
             <h1 id="family-events-page-title">已发布摘要</h1>
             <p>只显示经过关系、同意和隐私过滤的发布内容。</p>
           </section>
+          <FamilyEmergencyPanel />
           <FamilySummariesPanel />
         </div>
       );
