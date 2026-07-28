@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { AuthenticatedPortal } from '../../../../components/authenticated-portal';
-import { isRole, isRoleSection } from '../../../../components/types';
+import { isRole, isRoleSectionPath } from '../../../../components/types';
 
 interface MobileRolePageProps {
   params: Promise<{
@@ -18,15 +18,9 @@ export default async function MobileRolePage({ params }: MobileRolePageProps) {
   }
 
   const requestedSection = section ?? ['home'];
-  const sectionName = requestedSection[0];
-
-  if (
-    requestedSection.length !== 1 ||
-    sectionName === undefined ||
-    !isRoleSection(role, sectionName)
-  ) {
+  if (!isRoleSectionPath(role, requestedSection)) {
     notFound();
   }
 
-  return <AuthenticatedPortal initialTab={sectionName} requestedRole={role} />;
+  return <AuthenticatedPortal initialPath={requestedSection} requestedRole={role} />;
 }

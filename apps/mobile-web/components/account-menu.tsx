@@ -15,11 +15,16 @@ import type { AuthSession } from './auth-types';
 import { clearPrivateClientState } from './principal-state';
 
 interface AccountMenuProps {
+  readonly navigationBlocked?: boolean;
   readonly onSignedOut: () => void;
   readonly session: AuthSession;
 }
 
-export function AccountMenu({ onSignedOut, session }: AccountMenuProps) {
+export function AccountMenu({
+  navigationBlocked = false,
+  onSignedOut,
+  session
+}: AccountMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState('');
@@ -184,9 +189,15 @@ export function AccountMenu({ onSignedOut, session }: AccountMenuProps) {
               </p>
             ) : null}
 
+            {navigationBlocked ? (
+              <p className="workflow-alert workflow-alert-info" role="status">
+                当前操作尚未得到服务器最终确认。请先关闭菜单，并在当前页面提交或取消后再退出。
+              </p>
+            ) : null}
+
             <button
               className="danger-button full-width-button account-logout-button"
-              disabled={isSigningOut}
+              disabled={isSigningOut || navigationBlocked}
               onClick={() => void handleLogout()}
               type="button"
             >

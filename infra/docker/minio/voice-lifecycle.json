@@ -1,0 +1,14 @@
+{
+  "Rules": [
+    {
+      "ID": "expire-voice-staging-fallback",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "voice/staging/"
+      },
+      "Expiration": {
+        "Days": 1
+      }
+    }
+  ]
+}

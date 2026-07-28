@@ -12,13 +12,19 @@ import {
   UserOutlined
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AccountMenu } from './account-menu';
 import type { AuthSession } from './auth-types';
+import {
+  CaregiverTaskDetail,
+  CaregiverTasksPanel,
+  ElderVoiceRequestPage,
+  FamilySummariesPanel
+} from './m03-workflows';
 import { CaregiverHome, ElderHome, FamilyHome, SecondaryShell } from './role-homes';
 import type { Role } from './types';
-import { roleLabels } from './types';
+import { isRoleSectionPath, roleLabels } from './types';
 
 interface TabDefinition {
   readonly icon: ReactNode;
@@ -48,50 +54,165 @@ const tabsByRole: Record<Role, readonly TabDefinition[]> = {
 };
 
 interface MobileExperienceProps {
-  readonly initialTab?: string;
+  readonly initialPath?: readonly string[];
   readonly onSignedOut: () => void;
   readonly role: Role;
   readonly session: AuthSession;
 }
 
-function getInitialTab(role: Role, requestedTab: string | undefined): string {
-  const roleTabs = tabsByRole[role];
-  return roleTabs.some((tab) => tab.key === requestedTab) ? (requestedTab ?? 'home') : 'home';
+interface PortalRoute {
+  readonly detailId?: string;
+  readonly section: string;
 }
 
-function updatePortalPath(role: Role, tab: string): void {
+function getInitialRoute(role: Role, requestedPath: readonly string[] | undefined): PortalRoute {
+  const path = requestedPath ?? ['home'];
+  if (!isRoleSectionPath(role, path)) return { section: 'home' };
+  return { detailId: path[1], section: path[0] ?? 'home' };
+}
+
+function portalPath(role: Role, route: PortalRoute): string {
+  const suffix = route.detailId ? `/${encodeURIComponent(route.detailId)}` : '';
+  return `/m/${role}/${route.section}${suffix}`;
+}
+
+function updatePortalPath(role: Role, route: PortalRoute, replace = false): void {
   if (typeof window !== 'undefined') {
-    window.history.replaceState(null, '', `/m/${role}/${tab}`);
+    const path = portalPath(role, route);
+    if (replace) window.history.replaceState(null, '', path);
+    else window.history.pushState(null, '', path);
   }
 }
 
+function routesMatch(left: PortalRoute, right: PortalRoute): boolean {
+  return left.section === right.section && left.detailId === right.detailId;
+}
+
+function routeFromWindow(role: Role): PortalRoute | null {
+  if (typeof window === 'undefined') return null;
+  const prefix = `/m/${role}/`;
+  if (!window.location.pathname.startsWith(prefix)) return null;
+  const path = window.location.pathname.slice(prefix.length).split('/').filter(Boolean);
+  return isRoleSectionPath(role, path)
+    ? { detailId: path[1], section: path[0] ?? 'home' }
+    : null;
+}
+
 export function MobileExperience({
-  initialTab,
+  initialPath,
   onSignedOut,
   role,
   session
 }: MobileExperienceProps) {
-  const [activeTab, setActiveTab] = useState(() => getInitialTab(role, initialTab));
+  const [route, setRoute] = useState(() => getInitialRoute(role, initialPath));
+  const [navigationBlocked, setNavigationBlocked] = useState(false);
+  const [navigationBlockNotice, setNavigationBlockNotice] = useState('');
+  const routeRef = useRef(route);
+  const navigationBlockedRef = useRef(navigationBlocked);
+  routeRef.current = route;
+  navigationBlockedRef.current = navigationBlocked;
   const activeTabs = tabsByRole[role];
+  const activeTab = activeTabs.some((tab) => tab.key === route.section) ? route.section : 'home';
   const activeTabDefinition = useMemo(
     () => activeTabs.find((tab) => tab.key === activeTab) ?? activeTabs[0],
     [activeTab, activeTabs]
   );
 
+  const handleNavigationBlockChange = useCallback((blocked: boolean) => {
+    navigationBlockedRef.current = blocked;
+    setNavigationBlocked(blocked);
+    if (!blocked) setNavigationBlockNotice('');
+  }, []);
+
+  const showNavigationBlocked = useCallback(() => {
+    setNavigationBlockNotice(
+      '当前操作尚未得到服务器最终确认。请使用页面内的返回、取消或提交操作，确认完成后再离开。'
+    );
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextRoute = routeFromWindow(role);
+      if (
+        navigationBlockedRef.current &&
+        (nextRoute === null || !routesMatch(routeRef.current, nextRoute))
+      ) {
+        window.history.pushState(null, '', portalPath(role, routeRef.current));
+        showNavigationBlocked();
+        return;
+      }
+      if (nextRoute) setRoute(nextRoute);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [role, showNavigationBlocked]);
+
   const switchTab = (tab: TabDefinition) => {
-    setActiveTab(tab.key);
-    updatePortalPath(role, tab.key);
+    const nextRoute = { section: tab.key };
+    if (navigationBlockedRef.current && !routesMatch(routeRef.current, nextRoute)) {
+      showNavigationBlocked();
+      return;
+    }
+    setRoute(nextRoute);
+    updatePortalPath(role, nextRoute);
   };
 
-  const navigateToTab = (tabKey: string) => {
-    const tab = activeTabs.find((candidate) => candidate.key === tabKey);
-    if (tab) {
-      switchTab(tab);
-    }
+  const navigate = (section: string, detailId?: string, replace = false) => {
+    const nextRoute = { detailId, section };
+    if (!isRoleSectionPath(role, detailId ? [section, detailId] : [section])) return;
+    setNavigationBlockNotice('');
+    setRoute(nextRoute);
+    updatePortalPath(role, nextRoute, replace);
   };
 
   const renderCurrentPage = () => {
-    if (activeTab !== 'home') {
+    if (role === 'elder' && route.section === 'voice-request') {
+      return (
+        <ElderVoiceRequestPage
+          initialSubmissionId={route.detailId}
+          onExit={() => navigate('home')}
+          onNavigationBlockChange={handleNavigationBlockChange}
+          onSubmissionCreated={(submissionId) => navigate('voice-request', submissionId, true)}
+        />
+      );
+    }
+
+    if (role === 'caregiver' && route.section === 'tasks') {
+      if (route.detailId) {
+        return (
+          <CaregiverTaskDetail
+            onBack={() => navigate('tasks')}
+            onNavigationBlockChange={handleNavigationBlockChange}
+            workOrderId={route.detailId}
+          />
+        );
+      }
+      return (
+        <div className="role-page caregiver-tasks-page">
+          <section className="role-intro" aria-labelledby="caregiver-tasks-page-title">
+            <p className="eyebrow">护工端 · 当前班次</p>
+            <h1 id="caregiver-tasks-page-title">我的任务</h1>
+            <p>优先任务排在前面；打开详情后服务器会再次鉴权。</p>
+          </section>
+          <CaregiverTasksPanel onSelect={(workOrderId) => navigate('tasks', workOrderId)} />
+        </div>
+      );
+    }
+
+    if (role === 'family' && route.section === 'events') {
+      return (
+        <div className="role-page family-events-page">
+          <section className="role-intro" aria-labelledby="family-events-page-title">
+            <p className="eyebrow">家属端 · 照护动态</p>
+            <h1 id="family-events-page-title">已发布摘要</h1>
+            <p>只显示经过关系、同意和隐私过滤的发布内容。</p>
+          </section>
+          <FamilySummariesPanel />
+        </div>
+      );
+    }
+
+    if (route.section !== 'home') {
       return (
         <SecondaryShell
           label={activeTabDefinition?.label ?? '当前'}
@@ -107,14 +228,14 @@ export function MobileExperience({
     }
 
     if (role === 'elder') {
-      return <ElderHome displayName={session.user.displayName} onNavigate={navigateToTab} />;
+      return <ElderHome displayName={session.user.displayName} onNavigate={navigate} />;
     }
 
     if (role === 'caregiver') {
-      return <CaregiverHome onNavigate={navigateToTab} />;
+      return <CaregiverHome onNavigate={navigate} />;
     }
 
-    return <FamilyHome onNavigate={navigateToTab} />;
+    return <FamilyHome />;
   };
 
   return (
@@ -123,18 +244,30 @@ export function MobileExperience({
         <header className="mobile-header">
           <div className="fixture-banner">
             <LockOutlined aria-hidden="true" />
-            <span>服务器会话已确认 · 当前内容均为虚构本地示例</span>
+            <span>服务器会话已确认 · 业务结果以服务端为准</span>
           </div>
           <div className="mobile-topbar">
             <div className="product-lockup">
               <strong>安心照护</strong>
               <span>{roleLabels[role]}</span>
             </div>
-            <AccountMenu onSignedOut={onSignedOut} session={session} />
+            <AccountMenu
+              navigationBlocked={navigationBlocked}
+              onSignedOut={onSignedOut}
+              session={session}
+            />
           </div>
         </header>
 
-        <main className="mobile-main">{renderCurrentPage()}</main>
+        <main className="mobile-main">
+          {navigationBlockNotice ? (
+            <div className="workflow-alert workflow-alert-info" role="alert">
+              <LockOutlined aria-hidden="true" />
+              <span>{navigationBlockNotice}</span>
+            </div>
+          ) : null}
+          {renderCurrentPage()}
+        </main>
 
         <nav className="bottom-navigation" aria-label={`${roleLabels[role]}底部导航`}>
           {activeTabs.map((tab) => (

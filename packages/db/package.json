@@ -19,7 +19,7 @@
     "test": "vitest run --passWithNoTests src",
     "db:generate": "prisma generate --config prisma.config.ts",
     "db:migrate": "prisma migrate deploy --config prisma.config.ts",
-    "db:seed": "pnpm --filter @eldercare/authz build && prisma db seed --config prisma.config.ts",
+    "db:seed": "corepack pnpm --filter @eldercare/authz build && prisma db seed --config prisma.config.ts",
     "db:reset": "prisma migrate reset --force --config prisma.config.ts"
   },
   "dependencies": {

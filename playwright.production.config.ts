@@ -20,6 +20,7 @@ export default defineConfig({
       url: 'http://127.0.0.1:4000/health/live',
       reuseExistingServer: false,
       env: {
+        AUTH_RATE_LIMIT_MAX_ATTEMPTS: '100',
         AUTH_RATE_LIMIT_KEY_PREFIX: `eldercare:offline-e2e:${Date.now()}`,
         CORS_ORIGINS: 'http://127.0.0.1:3001'
       },

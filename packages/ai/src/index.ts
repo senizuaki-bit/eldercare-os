@@ -1,4 +1,4 @@
-/** Provider-neutral AI contracts. M00 intentionally supplies no provider implementation. */
+/** Provider-neutral AI contracts. */
 export interface ProviderContext {
   readonly correlationId: string;
   readonly provider: string;
@@ -11,6 +11,8 @@ export interface AudioInput {
   readonly objectKey: string;
   readonly mimeType: string;
   readonly language?: string;
+  /** Local deterministic fixture only; real providers ignore this field. */
+  readonly fixtureKey?: string;
 }
 
 export interface TranscriptResult {
@@ -56,3 +58,5 @@ export interface StructuredAnalysisProvider {
 export interface SpeechProvider {
   synthesize(input: SpeechInput, context: ProviderContext): Promise<SpeechResult>;
 }
+
+export * from './fake.js';

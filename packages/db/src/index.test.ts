@@ -14,6 +14,18 @@ describe('createPrismaClient', () => {
     expect(prisma.dataScope).toBeDefined();
     expect(prisma.authSession).toBeDefined();
     expect(prisma.auditEvent).toBeDefined();
+    expect(prisma.voiceSubmission).toBeDefined();
+    expect(prisma.transcript).toBeDefined();
+    expect(prisma.aIAnalysis).toBeDefined();
+    expect(prisma.need).toBeDefined();
+    expect(prisma.needLink).toBeDefined();
+    expect(prisma.workOrder).toBeDefined();
+    expect(prisma.workOrderAssignment).toBeDefined();
+    expect(prisma.workOrderTransition).toBeDefined();
+    expect(prisma.workOrderArrival).toBeDefined();
+    expect(prisma.serviceCompletion).toBeDefined();
+    expect(prisma.familySummary).toBeDefined();
+    expect(prisma.rating).toBeDefined();
     await prisma.$disconnect();
   });
 

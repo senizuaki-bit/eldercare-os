@@ -28,6 +28,6 @@ import { StaffingService } from './staffing.service.js';
     EldersService,
     StaffingService,
   ],
-  exports: [M02ContextService],
+  exports: [M02ContextService, ElderAccessService],
 })
 export class M02Module {}

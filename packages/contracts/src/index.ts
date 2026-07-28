@@ -8,6 +8,7 @@ export * from './identity.js';
 export * from './facility-directory.js';
 export * from './elder.js';
 export * from './staffing.js';
+export * from './needs-workorders.js';
 
 export const healthCheckSchema = z
   .enum(['ok', 'error']);

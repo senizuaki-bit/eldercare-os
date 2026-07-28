@@ -1,71 +1,46 @@
-# M02 Design QA
+# M03 Design QA
 
 ## Evidence
 
-- Source visual truth path: `docs/design/m02-room-bed-direction.png`
-- Primary implementation screenshot path: `docs/design/qa/m02-admin-rooms-1586x992.png`
-- Full-view comparison evidence: `docs/design/qa/m02-room-comparison-1586x992.png`
-- Additional implementation evidence:
-  - `docs/design/qa/m02-admin-elders-1440x900.png`
-  - `docs/design/qa/m02-admin-staff-1440x900.png`
-  - `docs/design/qa/m02-admin-shifts-1440x900.png`
-  - `docs/design/qa/m02-admin-contact-sheet.png`
-  - `docs/design/qa/m02-mobile-contact-sheet.png`
-- Viewport: room comparison `1586×992`; admin acceptance `1440×900` and `1280×900`; mobile acceptance `375×812` and `360×800`.
-- State: authenticated fictional facility director on the loaded room/bed directory; authenticated elder, caregiver, and family sessions on their loaded home states.
-- Browser-rendered evidence: project Chromium via the repository Playwright configuration. The in-app browser also verified the 1440×900 login composition and semantic labels; its local cross-port API policy prevented authenticated use, so authenticated screenshots and interactions use project Chromium.
-- Focused-region comparison: no separate crop was needed. The combined comparison keeps both 1586×992 images at native scale, and the room headings, summary metrics, filters, status cards, bed rows, icons, typography, borders, and privacy copy remain legible. The post-fix shift and caregiver screens were additionally inspected at native resolution.
+- Source visual direction: `docs/design/m03-elder-voice-request-direction.png`
+- Source rationale: `docs/design/m03-elder-voice-request-direction.md`
+- Same-state comparison: `docs/design/qa/m03-elder-voice-request-comparison.png` (reference left, implementation right)
+- Final elder capture: `docs/design/qa/m03-elder-voice-request-375x812.png`
+- Supporting captures:
+  - `docs/design/qa/m03-admin-needs-1440x900.png`
+  - `docs/design/qa/m03-admin-work-order-detail-1440x900.png`
+  - `docs/design/qa/m03-caregiver-high-risk-checklist-375x812.png`
+  - `docs/design/qa/m03-family-summary-360x800.png`
 
-## Findings
+The in-app browser reported the responsive viewport independently of the saved image raster. Mobile browser chrome reduces the encoded capture area, so the filenames describe the verified browser viewport rather than the JPEG raster dimensions.
 
-No actionable P0, P1, or P2 finding remains.
+## Comparison Result
 
-- Typography: the implementation uses the existing Chinese system-font stack with clear 14 px admin content, stronger page/card hierarchy, and 18 px-or-larger elder primary content. Week-card titles now have enough width and no longer wrap one character per line. Mobile elder names are `h3` beneath their list-section `h2`.
-- Spacing and layout rhythm: the room screen preserves the source direction—persistent teal navigation, compact top bar, breadcrumb/title/action row, four capacity summaries, filters, and a dense room-card grid—while remaining visually original. Vacant rooms now sort first and four cards fit across the reference frame. The week view intentionally uses a labelled horizontal scroll region plus an equivalent list view so each day remains scan-readable at 1440 and 1280 widths.
-- Colors and tokens: restrained teal/blue surfaces, text-labelled status colors, light borders, and 10–12 px admin radii are consistent with the design system. The empty-shift text was moved from `#758395` to `--admin-text-secondary`, resolving the 3.86:1 Axe failure.
-- Image quality and asset fidelity: the operational UI needs no raster product imagery. It uses the existing Ant Design icon family instead of emoji, CSS drawings, handwritten SVGs, or placeholder art. The generated room/bed direction image remains a design reference rather than a runtime asset.
-- Copy and content: room cards explicitly avoid elder identity, family copy names withheld fields, caregiver copy names the active-shift boundary, elder-facing AI is disclosed as advisory, and all data is labelled as fictional or fixed demonstration content where relevant.
-- Interactions and accessibility: real login, search, filters, column settings, pagination, quick detail, sensitive-access gate, room/staff/shift navigation, caregiver task progression, family privacy projection, and role denial were exercised. Axe reports no serious/critical violations after the contrast repair. Stable authenticated admin routes and all three mobile roles emitted no console errors or page errors; the expected unauthenticated session probe on the login screen returns 401 before login and was excluded from the post-auth console check.
+The elder implementation preserves the selected direction's calm teal/neutral palette, large single primary action, explicit AI identity, human-review boundary, human handoff, privacy explanation, and restrained bottom navigation. The final hierarchy puts “取消并返回” and “联系工作人员” immediately after the dominant request action, before the deterministic demo phrase, so an elder can exit or reach a person without scrolling.
 
-## Open Questions
+The implementation intentionally says “提交演示语句” instead of pretending to record real audio. Success is shown only after the server confirms it. The deterministic “头晕” example says that staff and safety rules—not AI—decide escalation.
 
-- The source direction includes a building tree and an enabled admission action. M02 intentionally ships a visually original four-filter directory and honest disabled create buttons because this milestone connects read management screens while CRUD is delivered at the authorized API layer. A guided admission UI remains future product work, not hidden functionality.
-- The Next development toolbar was removed only from QA screenshots. No runtime product element was altered for capture.
+## Browser Verification
 
-## Comparison History
+- Elder voice request at `375×812`: viewport measured in-page; primary action height `128px`; cancel and human-help actions each `69.6px`; no horizontal overflow; no console error or warning.
+- Caregiver high-risk completion at `375×812`: the three server-owned checklist labels have approximately `48.2px` targets; the raw safety-rule code was replaced in the final tree by a readable Chinese product label with wrapping and a regression test.
+- Family summary at `360×800`: privacy-filtered summary visible; no caregiver live location, coordinates, raw audio, transcript, or internal completion note; no horizontal overflow or console error.
+- Admin need queue and work-order detail at `1440×900`: queue-before-analytics hierarchy, AI-advisory and deterministic-rule separation, immutable timeline, no horizontal overflow, and no console error.
+- Keyboard/focus: the unique skip link targets `#main-content` and showed a `2.4px` visible focus outline.
+- Automated Playwright coverage passed at admin `1440×900` and `1280×900`, plus mobile `375×812` and `360×800`; serious/critical Axe findings were empty.
+- Production offline coverage passed and confirmed that protected portal content is not restored from cache.
 
-1. Initial capture was rejected as invalid evidence because elders, staff, shifts, and scoped mobile cards were photographed before data and Ant styles had settled. Capture scripts were changed to wait for real seeded records, computed styles, fonts, and stable hydration before taking screenshots.
-2. First valid comparison found:
-   - P1: caregiver elder cards preceded the priority task and pushed the main action below the fold.
-   - P1: seven-day shift cards were too narrow and long names wrapped almost character-by-character.
-   - P2: mobile elder-card titles flattened the heading hierarchy.
-   - P2: the room grid hid available rooms below several tall full-room cards.
-   - P2: empty-shift text failed WCAG AA contrast at 3.86:1.
-3. Fixes made:
-   - moved the priority task and its action above the caregiver roster;
-   - widened the week grid, fixed the row-header/day column proportions, stacked status beneath the title, and retained keyboard-accessible horizontal scrolling plus list view;
-   - changed elder-card names from `h2` to `h3`;
-   - changed the room view to a four-column grid and availability-first ordering;
-   - used the existing secondary text token for empty-shift copy.
-4. Post-fix visual evidence:
-   - `docs/design/qa/m02-mobile-caregiver-375x812.png`
-   - `docs/design/qa/m02-mobile-caregiver-360x800.png`
-   - `docs/design/qa/m02-admin-shifts-1440x900.png`
-   - `docs/design/qa/m02-room-comparison-1586x992.png`
-5. Post-fix automated evidence: full repository unit, lint, type, integration and production build gates passed; the complete admin/mobile E2E suite passed 12/12; production offline PWA passed 1/1; screenshot QA passed; stable admin and mobile console/page-error checks passed.
+## Accessibility and Safety Review
 
-## Implementation Checklist
+- Core admin text remains at least `14px`; elder primary content and critical controls use the larger mobile scale.
+- Touch targets meet the `44px` baseline, and elder critical actions exceed `56px`.
+- Risk and state use icon-plus-text labels rather than color alone.
+- Elder-facing AI disclosure, exit, and human handoff are visible in the primary flow.
+- Family output is consent-filtered and does not expose caregiver location.
+- High-risk caregiver completion requires all server-owned checklist confirmations; the UI does not imply diagnosis or emergency closure.
 
-- [x] Source and implementation compared in one native-size combined image.
-- [x] Desktop 1440/1280 and mobile 375/360 breakpoints checked.
-- [x] Fonts, spacing, tokens, image/icon fidelity, copy, privacy, states, and accessibility reviewed.
-- [x] All P1/P2 findings fixed and recaptured.
-- [x] Console and page errors checked after authenticated hydration.
-- [x] Evidence saved under `docs/design/qa/`.
+## Scope
 
-## Follow-up Polish
-
-- P3: a future admission-flow milestone can replace the disabled create affordances with a reviewed stepper once the full business workflow is in scope.
-- P3: production telemetry can separately measure whether operators prefer the room vacancy-first default or a persisted personal sort.
+This pass covers the M03 product surfaces and primary journey: elder request, admin review/work order, caregiver response, family-safe summary, and elder-facing service review foundations. M04 emergency handling, M06 live location, M09 reporting, and later platform workflows remain intentionally out of scope.
 
 final result: passed

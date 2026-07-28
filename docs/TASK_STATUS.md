@@ -4,8 +4,8 @@
 |---|---|---|---|---|
 | M00 Foundation | COMPLETE | feat/m00-foundation | passed | 2026-07-11; local milestone commit, no Git remote/PR configured |
 | M01 Auth/RBAC | COMPLETE | feat/m01-auth-rbac | passed | 2026-07-13; local milestone accepted, GitHub publish pending remote/CLI setup |
-| M02 Elder management | COMPLETE | feat/m02-elder-management | passed | 2026-07-21; all acceptance gates passed; [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) opened as draft |
-| M03 Needs/work orders | NOT_STARTED | feat/m03-needs-workorders | pending | |
+| M02 Elder management | COMPLETE | feat/m02-elder-management | passed | 2026-07-21; all acceptance gates passed; [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) merged |
+| M03 Needs/work orders | READY_FOR_REVIEW | feat/m03-needs-workorders | passed | full acceptance and security gates passed; draft PR pending |
 | M04 Emergency | NOT_STARTED | feat/m04-emergency | pending | |
 | M05 IoT/offline | NOT_STARTED | feat/m05-iot-offline | pending | |
 | M06 Indoor map | NOT_STARTED | feat/m06-indoor-map | pending | |
@@ -25,6 +25,7 @@
 - NOT_STARTED
 - PLANNING
 - IN_PROGRESS
+- READY_FOR_REVIEW
 - BLOCKED
 - IN_REVIEW
 - COMPLETE
@@ -92,7 +93,7 @@ For each completed milestone record:
 
 ## M02 completion record
 
-- Commit/PR: branch `feat/m02-elder-management`; milestone commit `aab14f1` (`feat(m02): add elder and facility operations foundation`); [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) is open as a draft against `main`.
+- Commit/PR: branch `feat/m02-elder-management`; milestone commit `aab14f1` (`feat(m02): add elder and facility operations foundation`); [GitHub PR #1](https://github.com/senizuaki-bit/eldercare-os/pull/1) was merged into `main` on 2026-07-21.
 - Migrations and rollback: `20260713000000_elder_management` adds facility directory, elder/admission/stay, family relationship, emergency contact, accessibility, communication preference, baseline, consent/sharing, staff/team/shift, assignment, timeline and transactional outbox models; `rollback.sql` is included. Migrate, repeat migrate, repeat seed, clean reset, and seed after reset passed against local PostgreSQL.
 - APIs/events/state machines: contract-backed CRUD and paginated reads under organization/facility-scoped elder, directory and staffing route families; family and caregiver projections expose only authorized elder fields. M02 creates transactional `OutboxEvent` records for mutations but intentionally does not start the M03 work-order state machine or asynchronous publisher early.
 - Permissions/consents/approvals: 16 M02 permissions cover elder, sensitive elder, facility directory, staff, team, shift, consent and relationship reads/writes. Backend guards combine permission, tenant/facility context, linked-elder, active-shift, team and assignment relationships; future-dated or revoked grants fail closed. Family sharing is a server-timestamped full replacement, an empty set revokes all fields, and sensitive reads are separately gated and audited.
@@ -109,4 +110,28 @@ For each completed milestone record:
 - Screenshots/routes: admin `/elders`, `/facility/rooms`, `/staff`, `/shifts`; mobile `/m/elder/home`, `/m/caregiver/home`, `/m/family/home`; Swagger `/docs`. Native-size reference/implementation comparison, contact sheets and dual-viewport evidence are under `docs/design/qa/`; `design-qa.md` ends with `final result: passed`.
 - Journey/test mapping: M02 supplies the organization/facility, room/bed, elder/family, staff/team/shift and consent-aware data foundation for journey A and later emergency, device, content, activity, commerce and agent journeys. It does not claim the M03 need-to-work-order workflow, M04 emergency flow or M10 compliance lifecycle complete.
 - Known limitations: admin creation actions remain honest disabled affordances until a reviewed admission/staffing workflow is in scope; the directory UI is read-first while authorized CRUD is available through the API. Fake seed identities and local providers remain mandatory.
-- Next milestone prerequisites: review and merge the M02 PR, then create `feat/m03-needs-workorders` from the accepted M02 line and implement the elder request, deterministic risk check, work-order lifecycle, caregiver response, family-safe summary, elder review and audit flow without starting M04 early.
+- Next milestone prerequisites: satisfied on 2026-07-21 when M02 was merged and `feat/m03-needs-workorders` was created from the accepted line; M03 must retain the elder request, deterministic risk check, work-order lifecycle, caregiver response, family-safe summary, elder review and audit boundary without starting M04 early.
+
+## M03 acceptance record
+
+- Commit/PR: branch `feat/m03-needs-workorders`; milestone commit subject `feat(m03): add auditable needs and work-order workflow`; draft PR URL will be added immediately after GitHub creates it.
+- Migrations and rollback: `20260721000000_needs_workorders` adds voice submissions, transcripts, schema-validated AI analyses, linked needs, work orders, assignments, transitions, immutable arrivals, completion records, family summaries and ratings; reviewed `rollback.sql` is included. Migrate, repeated migrate, repeated seed, clean reset/replay and storage lifecycle initialization passed.
+- APIs/events/state machines: elder upload-intent/finalize, deterministic demo, cancellation and human-help; administrator need queue/manual fallback/review and work-order list/detail/assignment/verification/closure; active-shift caregiver list/detail/accept/arrive/start/complete; elder verification/rating; consent-filtered family summaries; restricted transcript/audio URL access; authorization-scoped SSE task updates. The state machine is `NEW -> ASSIGNED -> ACCEPTED -> IN_PROGRESS -> COMPLETED -> VERIFIED -> CLOSED`, with controlled cancellation. Arrival is an immutable event/timestamp and version increment, not an extra state.
+- AI and safety boundary: the deterministic fixture for “我想喝热水，今天有点头晕。” produces linked daily-living and health needs. AI output is advisory, schema-validated and correction-aware; deterministic rules set priority and require human review. Transcription/analysis failure creates an auditable manual fallback. Consent withdrawal immediately suppresses analysis projections and prevents new sensitive persistence.
+- Permissions, privacy and audit: backend checks combine permission, tenant/facility context, elder ownership/relationship, active caregiver shift and assignment, and family-sharing consent. Mutations recheck authorization inside their transaction. SSE revalidates access for every event. Private audio uses bounded MIME/size validation, staging-to-sealed object handling, short-lived signed URLs, retention metadata and deletion fences. Family output excludes raw transcript/audio, internal completion notes and caregiver location.
+- Worker retention: cleanup uses a bounded `(retentionUntil, id)` keyset cursor, overscan and per-candidate isolation so a permanently failing oldest object cannot starve later eligible deletion. Logs retain aggregate reason codes rather than resource IDs or object keys.
+- Commands and exact result:
+  - `pnpm lint` — passed.
+  - `pnpm typecheck` — passed.
+  - `pnpm test` — passed; API `190/190`, admin `42/42`, mobile `74/74`, worker `15/15`, plus all package suites.
+  - `pnpm test:integration` — passed; API `37/37`, worker `2/2`, IoT simulator `2/2`.
+  - `pnpm build` — passed for the full workspace; the final mobile-only rebuild also passed after visual polish.
+  - `pnpm test:e2e` — `16/16` passed at admin `1440×900`/`1280×900` and mobile `375×812`/`360×800`, including serious/critical Axe checks.
+  - `pnpm test:e2e:offline` — `1/1` passed against production builds.
+  - `pnpm db:migrate` twice, `pnpm db:seed` twice, `pnpm db:reset`, post-reset seed and `pnpm storage:init` — passed.
+  - `pnpm compose:validate`, `pnpm security:scan`, `pnpm smoke:services`, and `git diff --check` — passed.
+  - Independent security review — `P0=0`, `P1=0`, including cross-tenant IDOR, consent withdrawal, SSE scope, family privacy and cleanup starvation review.
+- Product surfaces and QA: admin `/needs`, `/work-orders`, `/work-orders/[id]`; mobile `/m/elder/voice-request`, `/m/elder/services`, `/m/caregiver/tasks/[id]`, and family summaries on `/m/family/home`. In-app browser QA verified exact responsive viewports, focus, overflow, critical touch targets and console state. Evidence is under `docs/design/qa/`; `design-qa.md` ends with `final result: passed`.
+- Journey/test mapping: M03 completes Journey B through reliably persisted elder review/rating and negative authorization. It supplies event and state foundations for reporting, but M09/M16 own performance aggregation. M04 emergency state handling, M06 live location and all activity/commerce behavior remain out of scope.
+- Known limitations: all providers, people and records are fictional; Fake AI and local object storage are required. Real microphone capture is represented by a safe upload contract plus a deterministic demo phrase, not by a deceptive recording simulation. M03 priority/manual review is not the M04 emergency workflow. The local verification machine emitted a non-blocking engine warning because Node `24.14.0` is below the declared `24.16.0` minimum; CI/release environments must use the declared version.
+- Next milestone prerequisite: review and merge this single M03 PR before creating `feat/m04-emergency`; do not treat a health concern or priority work order as a closed emergency.
